@@ -84,7 +84,7 @@ const AdminSignup = () => {
 
     return (
       <div className="relative mb-5 group">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-400 transition-colors">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:dark:text-[#d2b48c] transition-colors">
           <Icon size={16} />
         </div>
         
@@ -156,7 +156,7 @@ const AdminSignup = () => {
                 <PulseLoader color="#ffffff" size={6} margin={2} />
               ) : (
                 <>
-                  Regster
+                  Register
                   <FaArrowRight size={10} className="text-white/70" />
                 </>
               )}

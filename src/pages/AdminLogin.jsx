@@ -6,7 +6,8 @@ import axios from 'axios';
 
 // 🌐 ENVIRONMENT CONTEXT GATEWAY
 // Automatically defaults to local dev port, swaps dynamically on production deployment
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+// .replace(/\/$/, '') removes any trailing slashes to prevent double-slash route errors
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -35,6 +36,7 @@ const AdminLogin = () => {
 
     try {
       // ✅ Production Secure: Dynamically targets local or live servers via API URL configs
+      // Because of the regex above, this will perfectly resolve to /api/admin/login without double slashes!
       const response = await axios.post(`${API_BASE_URL}/api/admin/login`, sanitizedPayload);
       
       if (response.data.success) {
