@@ -123,7 +123,7 @@ const AdminSignup = () => {
         
         {/* Header Branding Container */}
         <div className="p-8 text-center border-b border-gray-700 bg-gray-700/30">
-          <h2 className="text-2xl font-bold tracking-tight text-blue-400 uppercase">Admin Registry</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-blue-400 uppercase">Admin Signup</h2>
           <p className="text-gray-400 text-xs mt-2 font-medium">Provision a new administrative profile workspace</p>
         </div>
 
@@ -156,7 +156,7 @@ const AdminSignup = () => {
                 <PulseLoader color="#ffffff" size={6} margin={2} />
               ) : (
                 <>
-                  Complete Registration 
+                  Regster
                   <FaArrowRight size={10} className="text-white/70" />
                 </>
               )}

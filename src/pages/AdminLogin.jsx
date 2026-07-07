@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // 🌐 ENVIRONMENT CONTEXT GATEWAY
 // Automatically defaults to local dev port, swaps dynamically on production deployment
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -72,7 +72,7 @@ const AdminLogin = () => {
       <div className="max-w-md w-full bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-white/5">
         
         <div className="p-8 text-center border-b border-gray-700 bg-gray-700/30">
-          <h2 className="text-2xl font-bold tracking-tight text-blue-400 uppercase">Admin Portal</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-blue-400 uppercase">Admin Login</h2>
           <p className="text-gray-400 text-xs mt-2 font-medium">Authenticate administrative session credentials</p>
         </div>
 
