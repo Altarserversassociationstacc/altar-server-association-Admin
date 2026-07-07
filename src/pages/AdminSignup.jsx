@@ -53,7 +53,7 @@ const AdminSignup = () => {
       }
     } catch (err) {
       // Safely parse error strings from backend custom validation messages
-      setError(err.response?.data?.message || 'Signup operation failed. Please check network telemetry.');
+      setError(err.response?.data?.message || 'Signup operation failed. ');
     } finally {
       setLoading(false);
     }
