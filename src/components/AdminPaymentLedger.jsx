@@ -17,7 +17,8 @@ const AdminPaymentLedger = () => {
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
   const [configFeedback, setConfigFeedback] = useState({ type: '', message: '' });
 
-  const API_BASE_URL = import.meta.env?.VITE_API_BASE_URL || "http://localhost:10000";
+  // FIXED: Standardized environment variable and stripped the trailing slash to prevent '//api' errors
+  const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
   // 🛡️ Centralized & Sanitized Auth Headers Helper
   const getAuthHeaders = useCallback(() => {
