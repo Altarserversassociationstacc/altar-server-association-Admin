@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaLock, FaArrowRight, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 import axios from 'axios';
 
-// Pull from environment configurations or fallback gracefully to localhost bindings
+// Strictly pull from environment configurations without local fallbacks
 // .replace(/\/$/, '') removes any trailing slashes to prevent double-slash route errors
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 
 const AdminSignup = () => {
   const [formData, setFormData] = useState({
@@ -18,6 +18,11 @@ const AdminSignup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // States to toggle password visibility
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -26,6 +31,13 @@ const AdminSignup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Quick safeguard: warn the user if the environment variable is missing
+    if (!API_BASE_URL) {
+      setError('System Error: API environment variable is missing. Check hosting configuration.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
@@ -60,22 +72,50 @@ const AdminSignup = () => {
     }
   };
 
-  const renderInputField = (name, type, placeholder, Icon, required = true) => (
-    <div className="relative mb-5 group">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-400 transition-colors">
-        <Icon size={16} />
+  const renderInputField = (name, type, placeholder, Icon, required = true) => {
+    const isPassword = name === 'password';
+    const isConfirmPassword = name === 'confirmPassword';
+    const isPasswordField = isPassword || isConfirmPassword;
+
+    // Determine current input type based on visibility state
+    let inputType = type;
+    if (isPassword) inputType = showPassword ? 'text' : 'password';
+    if (isConfirmPassword) inputType = showConfirmPassword ? 'text' : 'password';
+
+    return (
+      <div className="relative mb-5 group">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-400 transition-colors">
+          <Icon size={16} />
+        </div>
+        
+        <input
+          type={inputType}
+          name={name}
+          value={formData[name]}
+          onChange={handleChange}
+          required={required}
+          placeholder={placeholder}
+          // Added pr-10 if it's a password field to prevent text overlapping with the eye icon
+          className={`w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3.5 placeholder-gray-400 transition-all outline-none ${isPasswordField ? 'pr-10' : ''}`}
+        />
+        
+        {/* Toggle Eye Icon Button for Password Fields */}
+        {isPasswordField && (
+          <button
+            type="button"
+            onClick={() => isPassword ? setShowPassword(!showPassword) : setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-white transition-colors focus:outline-none"
+          >
+            {isPassword ? (
+              showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />
+            ) : (
+              showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />
+            )}
+          </button>
+        )}
       </div>
-      <input
-        type={type}
-        name={name}
-        value={formData[name]}
-        onChange={handleChange}
-        required={required}
-        placeholder={placeholder}
-        className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3.5 placeholder-gray-400 transition-all outline-none"
-      />
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6 font-sans">
@@ -103,6 +143,7 @@ const AdminSignup = () => {
           <form onSubmit={handleSubmit} className="space-y-1">
             {renderInputField('fullName', 'text', 'Full Name', FaUser)}
             {renderInputField('email', 'email', 'Email Address', FaEnvelope)}
+            {/* The type 'password' here acts as the default, but our logic above will override it to 'text' when clicked */}
             {renderInputField('password', 'password', 'Password', FaLock)}
             {renderInputField('confirmPassword', 'password', 'Confirm Password', FaLock)}
 
