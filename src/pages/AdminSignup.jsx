@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaUser, FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
+import axios from 'axios';
 
-// ✅ 1. Import our custom smart routing instance instead of standard axios
-import api from '../utils/api'; 
-
-// ❌ 2. The broken API_BASE_URL environment variable was entirely deleted from here.
+// Pull from environment configurations or fallback gracefully to localhost bindings
+// .replace(/\/$/, '') removes any trailing slashes to prevent double-slash route errors
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const AdminSignup = () => {
   const [formData, setFormData] = useState({
@@ -38,9 +38,7 @@ const AdminSignup = () => {
     }
 
     try {
-      // ✅ 3. We now use 'api.post' and remove the base URL prefix. 
-      // The api.js file automatically handles routing to localhost or Render!
-      const response = await api.post('/api/admin/signup', {
+      const response = await axios.post(`${API_BASE_URL}/api/admin/signup`, {
         fullName: formData.fullName,
         email: formData.email,
         password: formData.password,
