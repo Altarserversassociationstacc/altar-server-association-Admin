@@ -135,10 +135,10 @@ const Dashboard = () => {
   // Structural Header Workspace Title Context Mapping 
   const headerMeta = (() => {
     switch (activeView) {
-      case 'massSelection': return { title: 'Sanctuary Selection', desc: 'Configure liturgical team rosters and operational deployments' };
-      case 'paymentLedger': return { title: 'Financial Ledger Registry', desc: 'Audit live transaction gateway logs, clearance processing, and exceptions' };
-      case 'accountManager': return { title: 'Security & Accounts', desc: 'Manage access levels, profile properties, and permission tokens' };
-      case 'registeredMembers': return { title: 'Member Database Directory', desc: 'Review verified profile forms, records tracking, and metadata arrays' };
+      case 'massSelection': return { title: 'Sanctuary', desc: 'Configure liturgical team rosters' };
+      case 'paymentLedger': return { title: 'Financial Ledger ', desc: 'Audit live transaction gateway logs' };
+      case 'accountManager': return { title: 'Security', desc: 'Manage access levels' };
+      case 'registeredMembers': return { title: 'Member Database ', desc: 'Review verified profile forms and records tracking' };
       default: return { title: 'Control Operations Panel', desc: 'Manage association content metrics, dashboard analytics, and leadership components' };
     }
   })();
@@ -153,7 +153,7 @@ const Dashboard = () => {
             {isSidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
           </button>
           <div className="flex items-center gap-3">
-            <span className={`font-serif text-xl tracking-widest font-bold uppercase transition-colors ${isDarkMode ? 'text-[#8b4513]' : 'text-stone-800'}`}>Super Admin</span>
+            <span className={`font-serif text-xl tracking-widest font-bold uppercase transition-colors ${isDarkMode ? 'text-[#8b4513]' : 'text-stone-800'}`}>Admin</span>
           </div>
         </div>
 
@@ -190,10 +190,7 @@ const Dashboard = () => {
                 onMouseLeave={() => setIsDropdownOpen(false)}
                 className={`absolute right-0 mt-3 w-48 backdrop-blur-xl border rounded-xl shadow-2xl overflow-hidden z-50 py-2 transition-all ${isDarkMode ? 'bg-[#111111]/95 border-[#2a1b12]' : 'bg-white border-stone-200'}`}
               >
-                <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-red-900/20 text-red-500 text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer">
-                  <FaSignOutAlt size={14} />
-                  <span>Logout Panel</span>
-                </button>
+           
               </div>
             )}
           </div>
@@ -213,10 +210,10 @@ const Dashboard = () => {
               <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-4 transition-colors ${isDarkMode ? 'text-[#8b4513]' : 'text-stone-500'}`}>Core Management</p>
               <div className="space-y-1.5">
                 {[
-                  { view: 'overview', label: 'Dashboard Overview', icon: <FaTachometerAlt size={13} /> },
-                  { view: 'paymentLedger', label: 'Financial Ledger', icon: <FaCreditCard size={13} className="text-emerald-500" /> },
-                  { view: 'accountManager', label: 'Account Security', icon: <FaUserLock size={13} /> },
-                  { view: 'registeredMembers', label: 'Member Registry', icon: <FaUsers size={13} /> },
+                  { view: 'overview', label: 'Dashboard', icon: <FaTachometerAlt size={13} /> },
+                  { view: 'paymentLedger', label: 'Finance', icon: <FaCreditCard size={13} className="text-emerald-500" /> },
+                  { view: 'accountManager', label: 'Account Management', icon: <FaUserLock size={13} /> },
+                  { view: 'registeredMembers', label: 'Member Registration', icon: <FaUsers size={13} /> },
                   { view: 'massSelection', label: 'Mass Deployment', icon: <FaClipboardList size={13} /> }
                 ].map((link) => (
                   <button 
@@ -237,11 +234,11 @@ const Dashboard = () => {
               <p className={`text-[10px] font-black uppercase tracking-[0.3em] mb-4 transition-colors ${isDarkMode ? 'text-[#8b4513]' : 'text-stone-500'}`}>Communications & Content</p>
               <div className="space-y-1.5">
                 {[
-                  { view: 'executives', label: 'Manage Executives', icon: <FaUsers size={13} /> },
+                  { view: 'executives', label: 'Executives', icon: <FaUsers size={13} /> },
                   { view: 'announcements', label: 'Announcements', icon: <FaBell size={13} /> },
-                  { view: 'events', label: 'Manage Events', icon: <FaCalendarAlt size={13} /> },
-                  { view: 'gallery', label: 'Manage Gallery', icon: <FaImages size={13} /> },
-                  { view: 'adminMeeting', label: 'Meeting Hub', icon: <FaUserEdit size={13} /> }
+                  { view: 'events', label: 'Events', icon: <FaCalendarAlt size={13} /> },
+                  { view: 'gallery', label: 'Gallery', icon: <FaImages size={13} /> },
+                  { view: 'adminMeeting', label: 'Meeting', icon: <FaUserEdit size={13} /> }
                 ].map((link) => (
                   <button 
                     type="button" key={link.view} onClick={() => handleViewChange(link.view)}

@@ -4,9 +4,7 @@ import { FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 import axios from 'axios';
 
-// 🌐 ENVIRONMENT CONTEXT GATEWAY
-// Automatically defaults to local dev port, swaps dynamically on production deployment
-// .replace(/\/$/, '') removes any trailing slashes to prevent double-slash route errors
+
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const AdminLogin = () => {
