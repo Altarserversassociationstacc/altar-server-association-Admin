@@ -393,9 +393,9 @@ const MassSelection = () => {
           <button 
             type="submit" 
             disabled={isSubmitting} 
-            className="w-full bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 py-6 rounded-3xl text-[11px] font-black uppercase tracking-[0.5em] shadow-2xl transition-all flex items-center justify-center gap-3 outline-none active:scale-[0.99]"
+            className="w-full bg-gradient-to-r from-green-800 to-green-700 hover:from-green-700 hover:to-green-600 py-6 rounded-3xl text-[11px] font-black  tracking-[0.5em] shadow-2xl transition-all flex items-center justify-center gap-3 outline-none active:scale-[0.99]"
           >
-            {isSubmitting ? <PulseLoader color="#fff" size={6} /> : <><FaBroadcastTower size={16} /> Broadcast Deployment</>}
+            {isSubmitting ? <PulseLoader color="#fff" size={6} /> : <><FaBroadcastTower size={16} /> Submit</>}
           </button>
         </form>
       </div>
