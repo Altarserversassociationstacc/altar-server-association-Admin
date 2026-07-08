@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
-  FaCalendarAlt, FaClock, FaUserCheck, FaUserShield, 
-  FaCross, FaChessKing, FaBroadcastTower, FaHeading,
+  FaCalendarAlt, FaClock, FaUserShield, 
+   FaChessKing, FaBroadcastTower,
   FaLink, FaUnlink, FaUserFriends, FaUserAltSlash, 
-  FaCheckCircle, FaTimesCircle, FaHistory, FaUserTag, FaCloudUploadAlt
+  FaCheckCircle, FaTimesCircle, FaHistory,  FaCloudUploadAlt
 } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 
@@ -14,7 +14,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || im
 // Structural map translating UI Display Labels back to explicit database schemas
 const ROLE_MATRIX = [
   { apiKey: 'sacristan', uiLabel: 'Sacristan' },
-  { apiKey: 'masterOfCeremonies', uiLabel: 'MC' },
+  { apiKey: 'masterOfCeremonies', uiLabel: 'Master of Ceremonies' },
   { apiKey: 'firstAcolyte', uiLabel: '1st Acolyte' },
   { apiKey: 'secondAcolyte', uiLabel: '2nd Acolyte' },
   { apiKey: 'crossBearer', uiLabel: 'Cross Bearer' },
@@ -243,28 +243,24 @@ const MassSelection = () => {
       <div className="bg-[#0a0a0a] border border-[#2a1b12] rounded-3xl p-6 md:p-10 shadow-2xl">
         <form onSubmit={handleDeployForm} className="space-y-10">
           <div className="space-y-4">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-              <FaHeading className="text-[#d2b48c] text-xs" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-[#d2b48c]">1. Celebration Metadata</h3>
-            </div>
             <div className="flex flex-col space-y-4">
-              <InputField label="Mass / Celebration Title" value={selectionForm.massTitle} onChange={(v) => handleInputChange('massTitle', v)} placeholder="Enter Celebration Title (e.g. Easter Vigil)" required />
+              <InputField label="Celebration Title" value={selectionForm.massTitle} onChange={(v) => handleInputChange('massTitle', v)} placeholder="Enter Celebration Title (e.g. Easter Vigil)" required />
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col space-y-2">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1">Academic Session Context</label>
+                  <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1"> Session </label>
                   <select value={selectionForm.semester} className="w-full bg-black border border-white/10 rounded-xl p-4 text-xs outline-none cursor-pointer focus:border-green-600 text-white" onChange={(e) => handleInputChange('semester', e.target.value)}>
                     <option value="Harmattan Semester">Harmattan (1st Term)</option>
                     <option value="Rain Semester">Rain (2nd Term)</option>
                   </select>
                 </div>
-                <InputField label="Institution / Branch" value={selectionForm.institution} onChange={(v) => handleInputChange('institution', v)} placeholder="Enter institution" />
+                <InputField label="Institution" value={selectionForm.institution} onChange={(v) => handleInputChange('institution', v)} placeholder="Enter institution" />
               </div>
 
               <div className="flex flex-col space-y-2">
-                <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1">Classification Schedule Type</label>
+                <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1">Schedule Type</label>
                 <select value={selectionForm.serviceType} className="w-full bg-black border border-white/10 rounded-xl p-4 text-xs outline-none cursor-pointer focus:border-green-600 text-white" onChange={(e) => handleInputChange('serviceType', e.target.value)}>
-                  <option value="Sunday Mass">Standard Sunday Mass</option>
+                  <option value="Sunday Mass">Sunday Mass</option>
                   <option value="Bishop Mass">High Pontifical (Bishop) Mass</option>
                   <option value="Evening Mass">Evening Mass</option>
                 </select>
@@ -272,11 +268,11 @@ const MassSelection = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col space-y-2">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1">Calendar Target Date</label>
+                  <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1">Calendar Date</label>
                   <input type="date" value={selectionForm.assignmentDate} className="bg-black border border-white/10 rounded-xl p-4 text-xs outline-none cursor-pointer focus:border-green-600 text-white" onChange={(e) => handleInputChange('assignmentDate', e.target.value)} required />
                 </div>
                 <div className="flex flex-col space-y-2">
-                  <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1">Execution Timestamp Time</label>
+                  <label className="text-[10px] uppercase tracking-wider text-gray-500 font-bold ml-1">Time</label>
                   <input type="time" value={selectionForm.assignmentTime} className="bg-black border border-white/10 rounded-xl p-4 text-xs outline-none cursor-pointer focus:border-green-600 text-white" onChange={(e) => handleInputChange('assignmentTime', e.target.value)} required />
                 </div>
               </div>
@@ -285,17 +281,13 @@ const MassSelection = () => {
 
           {/* SECTION 2: LEADERSHIP & SACRISTY */}
           <div className="space-y-4 pt-4 border-t border-white/5">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-              <FaUserCheck className="text-emerald-500 text-xs" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-emerald-500">2. Leadership & Sacristy</h3>
-            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <ServerInputField 
                 label="Sacristan" nameValue={selectionForm.sacristan} levelValue={selectionForm.sacristanLevel} 
                 onNameChange={(v) => handleInputChange('sacristan', v)} onLevelChange={(v) => handleInputChange('sacristanLevel', v)} placeholder="Sacristan Name" 
               />
               <ServerInputField 
-                label="Master of Ceremony (MC / NC)" nameValue={selectionForm.masterOfCeremonies} levelValue={selectionForm.masterOfCeremoniesLevel} 
+                label="Master of Ceremony" nameValue={selectionForm.masterOfCeremonies} levelValue={selectionForm.masterOfCeremoniesLevel} 
                 onNameChange={(v) => handleInputChange('masterOfCeremonies', v)} onLevelChange={(v) => handleInputChange('masterOfCeremoniesLevel', v)} 
                 placeholder="MC Name" color="text-emerald-400 font-bold" 
               />
@@ -342,10 +334,6 @@ const MassSelection = () => {
 
           {/* SECTION 4: PROCESSION APPARATUS */}
           <div className="space-y-4 pt-4 border-t border-white/5 animate-fadeIn">
-            <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-              <FaCross className="text-purple-500 text-xs" />
-              <h3 className="text-xs font-black uppercase tracking-widest text-purple-500">4. Procession Apparatus</h3>
-            </div>
             <div className={`grid ${isEveningMass ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-3'} gap-4`}>
               <ServerInputField 
                 label="Cross Bearer" nameValue={selectionForm.crossBearer} levelValue={selectionForm.crossBearerLevel} 
@@ -369,10 +357,6 @@ const MassSelection = () => {
           {/* SECTION 5: AUXILIARY SERVANTS */}
           {!isEveningMass && (
             <div className="space-y-4 pt-4 border-t border-white/5">
-              <div className="flex items-center gap-2 border-b border-white/5 pb-2">
-                <FaUserTag className="text-amber-500 text-xs" />
-                <h3 className="text-xs font-black uppercase tracking-widest text-amber-500">5. Auxiliary Servants</h3>
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ServerInputField 
                   label="Auxiliary 1" nameValue={selectionForm.firstAuxiliary} levelValue={selectionForm.firstAuxiliaryLevel} 
