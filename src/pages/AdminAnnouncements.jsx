@@ -3,6 +3,9 @@ import axios from 'axios';
 import { FaBell, FaHeading, FaTag, FaAlignLeft, FaEnvelope, FaTrash, FaCalendarAlt, FaSync } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 
+// Grab the environment variable and strip any accidental trailing slashes
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
 const AdminAnnouncements = () => {
   // Global form variables tracking configuration attributes dynamically
   const [formData, setFormData] = useState({
@@ -28,7 +31,7 @@ const AdminAnnouncements = () => {
     try {
       const token = localStorage.getItem('adminToken');
       
-      const res = await axios.get('http://localhost:5001/api/admin/announcements', {
+      const res = await axios.get(`${API_BASE_URL}/api/admin/announcements`, {
         headers: {
           Authorization: `Bearer ${token}` // ✅ FIXED: Appended token validation payload header parameters
         }
@@ -60,7 +63,7 @@ const AdminAnnouncements = () => {
       const token = localStorage.getItem('adminToken');
       
       // ✅ FIXED: Injected the required authorization perimeter header credentials pass
-      await axios.post('http://localhost:5001/api/admin/announcements', formData, {
+      await axios.post(`${API_BASE_URL}/api/admin/announcements`, formData, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -88,7 +91,7 @@ const AdminAnnouncements = () => {
       const token = localStorage.getItem('adminToken');
       
       // ✅ FIXED: Connected secure context mapping around data purges execution route
-      await axios.delete(`http://localhost:5001/api/admin/announcements/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/admin/announcements/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
