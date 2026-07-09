@@ -4,7 +4,7 @@ import { FaBell, FaHeading, FaTag, FaAlignLeft, FaEnvelope, FaTrash, FaCalendarA
 import { PulseLoader } from 'react-spinners';
 
 // Grab the environment variable and strip any accidental trailing slashes
-const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_URL|| 'http://localhost:5001').replace(/\/$/, '');
 
 const AdminAnnouncements = () => {
   // Global form variables tracking configuration attributes dynamically

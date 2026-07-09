@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // Strictly pull from environment configurations without local fallbacks
 // .replace(/\/$/, '') removes any trailing slashes to prevent double-slash route errors
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001').replace(/\/$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const AdminSignup = () => {
   const [formData, setFormData] = useState({
