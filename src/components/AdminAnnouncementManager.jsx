@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PulseLoader } from 'react-spinners';
 
+// Grab the environment variable and strip any accidental trailing slashes (just like AccountManager)
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
 export const AnnouncementList = ({ refreshTrigger }) => {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +18,8 @@ export const AnnouncementList = ({ refreshTrigger }) => {
         const token = localStorage.getItem('adminToken');
         
         // 🔒 SECURE SHIELD HANDSHAKE: Passes token credentials to clear backend 'protect' middleware
-        const response = await axios.get('http://localhost:5001/api/admin/announcements', {
+        // Updated to use the dynamic API_BASE_URL instead of localhost
+        const response = await axios.get(`${API_BASE_URL}/api/admin/announcements`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
