@@ -3,6 +3,9 @@ import axios from 'axios';
 import { FaCalendarAlt, FaUpload, FaHeading, FaList, FaMapMarkerAlt, FaClock, FaTrash, FaEdit, FaTimes, FaSync } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 
+// Grab the environment variable and strip any accidental trailing slashes
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
 const AdminEvents = () => {
   const [formData, setFormData] = useState({
     title: '',
@@ -32,7 +35,7 @@ const AdminEvents = () => {
   const fetchEvents = async () => {
     try {
       setFetchLoading(true);
-      const res = await axios.get('http://localhost:5001/api/events');
+      const res = await axios.get(`${API_BASE_URL}/api/events`);
       setEvents(res.data);
     } catch (err) {
       console.error("❌ [History Sync Drop]:", err);
@@ -76,10 +79,10 @@ const AdminEvents = () => {
       };
 
       if (editingId) {
-        await axios.put(`http://localhost:5001/api/events/${editingId}`, data, config);
+        await axios.put(`${API_BASE_URL}/api/events/${editingId}`, data, config);
         setStatus({ type: 'success', message: 'Event entry modified successfully!' });
       } else {
-        await axios.post('http://localhost:5001/api/events', data, config);
+        await axios.post(`${API_BASE_URL}/api/events`, data, config);
         setStatus({ type: 'success', message: 'New event flyer and narration published to live archives!' });
       }
       
@@ -114,7 +117,7 @@ const AdminEvents = () => {
     if (!window.confirm("Are you sure? This will delete the flyer permanently from the cloud index registries.")) return;
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.delete(`http://localhost:5001/api/events/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/events/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchEvents();
@@ -138,9 +141,9 @@ const AdminEvents = () => {
         
         <header className="mb-10 text-center relative z-10">
           <h2 className="text-3xl md:text-4xl font-serif text-[#d2b48c] mb-2 tracking-tight">
-            {editingId ? "Modify Existing Event" : "Publish Guild Event"}
+            {editingId ? "Modify Existing Event" : "Add New Event"}
           </h2>
-          <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Event & Narration Management</p>
+          <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Event & Narration </p>
         </header>
 
         {status.message && (
@@ -192,17 +195,17 @@ const AdminEvents = () => {
 
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-[#8b4513] font-bold ml-1">Brief Description (Card Summary)</label>
-            <textarea required name="description" value={formData.description} onChange={handleChange} rows="2" placeholder="Provide a summary text snippet for grid views..." className="w-full bg-[#161616] border border-[#2a1b12] rounded-xl p-4 text-sm text-[#d2b48c] focus:border-[#8b4513] outline-none resize-none" />
+            <textarea required name="description" value={formData.description} onChange={handleChange} rows="2" placeholder="Provide a summary text ." className="w-full bg-[#161616] border border-[#2a1b12] rounded-xl p-4 text-sm text-[#d2b48c] focus:border-[#8b4513] outline-none resize-none" />
           </div>
           
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-[#8b4513] font-bold ml-1">Full Narration (Deep Operational Guidelines)</label>
-            <textarea required name="narration" value={formData.narration} onChange={handleChange} rows="4" placeholder="Enter exhaustive parameters, agendas, and deep session notes here..." className="w-full bg-[#161616] border border-[#2a1b12] rounded-xl p-4 text-sm text-[#d2b48c] focus:border-[#8b4513] outline-none resize-none" />
+            <textarea required name="narration" value={formData.narration} onChange={handleChange} rows="4" placeholder="Enter agendas" className="w-full bg-[#161616] border border-[#2a1b12] rounded-xl p-4 text-sm text-[#d2b48c] focus:border-[#8b4513] outline-none resize-none" />
           </div>
 
           {/* Flyer Asset Element Frame Wrapper */}
           <div className="space-y-2">
-            <label className="text-[10px] uppercase text-[#8b4513] font-bold ml-1">Event Flyer Asset</label>
+            <label className="text-[10px] uppercase text-[#8b4513] font-bold ml-1">Upload Event Flyer</label>
             <div key={fileInputKey} className="relative group border-2 border-dashed border-[#2a1b12] hover:border-[#8b4513]/60 rounded-2xl p-8 text-center transition-all bg-[#0d0d0d] shadow-inner">
               <FaUpload className={`mx-auto mb-3 text-2xl group-hover:animate-bounce ${editingId ? 'text-gray-600' : 'text-[#8b4513]'}`} />
               <p className="text-gray-400 text-[10px] mb-2 uppercase tracking-widest font-bold">
@@ -221,7 +224,7 @@ const AdminEvents = () => {
 
           <div className="flex gap-4 pt-4">
             <button disabled={loading} type="submit" className="flex-1 bg-gradient-to-r from-[#8b4513] to-[#5c4033] py-4 rounded-xl text-white font-bold uppercase tracking-widest text-xs shadow-lg hover:brightness-110 active:scale-[0.99] transition-all flex justify-center items-center gap-3 disabled:opacity-50">
-              {loading ? <PulseLoader color="#ffffff" size={6} /> : editingId ? "Save Modifications" : "Publish Resource Block"}
+              {loading ? <PulseLoader color="#ffffff" size={6} /> : editingId ? "Save Modifications" : "Publish Event"}
             </button>
             {editingId && (
               <button type="button" onClick={cancelEdit} className="px-5 bg-[#161616] border border-[#2a1b12] text-gray-500 rounded-xl hover:text-white hover:border-gray-700 transition-colors">
@@ -235,7 +238,7 @@ const AdminEvents = () => {
       {/* Grid Table Ledger List Section */}
       <div className="max-w-4xl mx-auto">
         <h3 className="text-lg font-serif text-[#d2b48c] mb-6 border-b border-[#2a1b12] pb-4 flex items-center gap-3">
-          <FaSync className={fetchLoading ? "animate-spin text-[#8b4513]" : "text-[#8b4513]"} /> Catalog Archive Inventory
+          <FaSync className={fetchLoading ? "animate-spin text-[#8b4513]" : "text-[#8b4513]"} /> History
         </h3>
         {fetchLoading ? (
           <div className="text-center py-16"><PulseLoader color="#8b4513" size={10} /></div>

@@ -115,8 +115,8 @@ const AdminAnnouncements = () => {
           <div className="w-16 h-16 bg-[#8b4513]/10 border border-[#8b4513]/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <FaBell className="text-[#8b4513] text-2xl" />
           </div>
-          <h2 className="text-3xl font-serif text-[#d2b48c] mb-2">The Clarion Call</h2>
-          <p className="text-gray-400 text-[10px] uppercase tracking-widest font-black">Broadcast Association Update</p>
+          <h2 className="text-3xl font-serif text-[#d2b48c] mb-2">ANNOUNCEMENT</h2>
+          <p className="text-gray-400 text-[10px] uppercase tracking-widest font-black">Association Update</p>
         </header>
 
         {status.message && (
@@ -156,8 +156,7 @@ const AdminAnnouncements = () => {
             <div className="flex items-center gap-3">
               <FaEnvelope className={formData.sendAsEmail ? "text-[#8b4513] transition-colors" : "text-gray-600 transition-colors"} size={14} />
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-[#d2b48c]">Email Broadcast Notification</span>
-                <span className="text-[10px] text-gray-500">Dispatch this notification to vetted association accounts.</span>
+                <span className="text-xs font-bold text-[#d2b48c]">Email Notification</span>
               </div>
             </div>
             <label className="relative inline-flex items-center cursor-pointer select-none">
