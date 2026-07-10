@@ -3,8 +3,11 @@ import axios from 'axios';
 import { FaTrash, FaUserCircle } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 
+// Grab the environment variable and strip any accidental trailing slashes
+const API_BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+
 export const ExecutiveList = () => {
-  const [executives, setExecutives] = useState([]); // Base state initialized as clean array
+  const [executives, setExecutives] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -12,15 +15,14 @@ export const ExecutiveList = () => {
     try {
       setLoading(true);
       setError('');
-      // Match query standard parameters used by your production controllers
-      const response = await axios.get('http://localhost:5001/api/executives?group=false');
+      
+      // ✅ UPDATED: Replaced hardcoded localhost with dynamic API_BASE_URL
+      const response = await axios.get(`${API_BASE_URL}/api/executives?group=false`);
       
       if (isMounted) {
-        // Drill down inside the production success envelope wrapper securely
         if (response.data && response.data.success && Array.isArray(response.data.data)) {
           setExecutives(response.data.data);
         } else if (Array.isArray(response.data)) {
-          // Fallback handle for raw array variations
           setExecutives(response.data);
         } else {
           setExecutives([]);
@@ -41,7 +43,6 @@ export const ExecutiveList = () => {
   }, []);
 
   const handleDelete = async (id) => {
-    // Defensively copy array state format to prevent unhandled reference drops
     const safeExecutives = Array.isArray(executives) ? executives : [];
     const target = safeExecutives.find(ex => ex._id === id);
     
@@ -49,7 +50,9 @@ export const ExecutiveList = () => {
     
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.delete(`http://localhost:5001/api/executives/${id}`, {
+      
+      // ✅ UPDATED: Replaced hardcoded localhost with dynamic API_BASE_URL
+      await axios.delete(`${API_BASE_URL}/api/executives/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       
@@ -85,7 +88,6 @@ export const ExecutiveList = () => {
     );
   }
 
-  // Define array safety layouts directly before hitting evaluation rendering blocks
   const targetExecutives = Array.isArray(executives) ? executives : [];
 
   return (
