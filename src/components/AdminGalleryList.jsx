@@ -3,6 +3,9 @@ import axios from 'axios';
 import { FaTrash, FaSync, FaImages, FaCalendarAlt, FaDownload } from 'react-icons/fa';
 import { ClipLoader } from 'react-spinners';
 
+// Grab the environment variable and strip any accidental trailing slashes
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
 export const AdminGalleryList = ({ refreshTrigger }) => {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +14,7 @@ export const AdminGalleryList = ({ refreshTrigger }) => {
   const fetchGallery = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5001/api/gallery');
+      const res = await axios.get(`${API_BASE_URL}/api/gallery`);
       setImages(res.data);
     } catch (err) {
       console.error("Gallery Fetch Error:", err);
@@ -29,7 +32,7 @@ export const AdminGalleryList = ({ refreshTrigger }) => {
   const getImageUrl = (path) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
-    return `http://localhost:5001/${path.startsWith('/') ? path.slice(1) : path}`;
+    return `${API_BASE_URL}/${path.startsWith('/') ? path.slice(1) : path}`;
   };
 
   const handleDownload = async (imageUrl, title) => {
@@ -53,7 +56,7 @@ export const AdminGalleryList = ({ refreshTrigger }) => {
     if (window.confirm("Are you sure you want to remove this image from the archives?")) {
       try {
         const token = localStorage.getItem('adminToken');
-        await axios.delete(`http://localhost:5001/api/gallery/${id}`, {
+        await axios.delete(`${API_BASE_URL}/api/gallery/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setImages(images.filter(img => img._id !== id));

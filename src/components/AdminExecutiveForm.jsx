@@ -3,6 +3,9 @@ import axios from 'axios';
 import { FaUserTie, FaImage, FaTrash, FaSync, FaCalendarAlt, FaUser, FaEdit, FaTimes, FaChevronDown, FaFolderOpen } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 
+// Grab the environment variable and strip any accidental trailing slashes
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
 export const AdminExecutiveForm = () => {
   const initialFormState = {
     sessionYear: '2023/2024', 
@@ -21,7 +24,10 @@ export const AdminExecutiveForm = () => {
     '2022/2023',
     '2023/2024',
     '2024/2025',
-    '2025/2026'
+    '2025/2026',
+    '2026/2027',
+    '2027/2028',
+    '2028/2029'
   ];
 
   const [formData, setFormData] = useState(initialFormState);
@@ -45,7 +51,7 @@ export const AdminExecutiveForm = () => {
   const fetchExecutives = async (isMounted = true) => {
     setFetchLoading(true);
     try {
-      const res = await axios.get('http://localhost:5001/api/executives');
+      const res = await axios.get(`${API_BASE_URL}/api/executives`);
       
       if (isMounted) {
         // Drill down inside the production success envelope data wrapper safely
@@ -137,7 +143,7 @@ export const AdminExecutiveForm = () => {
       }
 
       if (editId) {
-        await axios.put(`http://localhost:5001/api/executives/${editId}`, data, {
+        await axios.put(`${API_BASE_URL}/api/executives/${editId}`, data, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -145,7 +151,7 @@ export const AdminExecutiveForm = () => {
         });
         setStatus({ type: 'success', message: 'Leadership record updated successfully.' });
       } else {
-        await axios.post('http://localhost:5001/api/executives', data, {
+        await axios.post(`${API_BASE_URL}/api/executives`, data, {
           headers: { 
             Authorization: `Bearer ${token}`,
             'Content-Type': 'multipart/form-data'
@@ -172,7 +178,7 @@ export const AdminExecutiveForm = () => {
     setDeletingId(id);
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.delete(`http://localhost:5001/api/executives/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/executives/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setExecutives(prev => Array.isArray(prev) ? prev.filter(ex => ex._id !== id) : []);
@@ -202,7 +208,7 @@ export const AdminExecutiveForm = () => {
             <FaUserTie className="text-[#8b4513] text-2xl" />
           </div>
           <h2 className="text-3xl font-serif text-[#d2b48c] mb-2 tracking-tight">
-            {editId ? "Update Profile" : "Guild Leadership"}
+            {editId ? "Update Profile" : "New Executive Registration"}
           </h2>
           <p className="text-gray-500 text-[10px] uppercase tracking-widest font-bold">
             {editId ? "Modify existing ledger data attributes" : "Manage Executives"}
@@ -229,7 +235,7 @@ export const AdminExecutiveForm = () => {
               <div className="w-11 h-6 bg-[#0f0f0f] border border-[#2a1b12] rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-gray-600 peer-checked:after:bg-[#d2b48c] after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#8b4513]/20 peer-checked:border-[#8b4513]"></div>
             </label>
           </div>
-           
+            
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <label className="text-[10px] uppercase text-[#8b4513] font-bold ml-1">Executive Name</label>
