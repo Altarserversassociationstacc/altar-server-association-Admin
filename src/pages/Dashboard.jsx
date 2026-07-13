@@ -5,7 +5,7 @@ import {
   FaTachometerAlt, FaUsers, FaBell, FaSignOutAlt, FaBars, 
   FaTimes, FaChevronDown, FaUserCircle, FaCalendarAlt, 
   FaHourglassHalf, FaImages, FaUserEdit, FaUserLock, FaClipboardList, FaCreditCard,
-  FaSun, FaMoon
+  FaSun, FaMoon, FaUserGraduate // <-- Added FaUserGraduate icon for Level Manager
 } from 'react-icons/fa';
 import { AdminExecutiveForm } from '../components/AdminExecutiveForm';
 import { ExecutiveList } from '../components/ExecutiveList'; 
@@ -17,6 +17,7 @@ import { AccountManager } from '../components/AccountManager';
 import MemberDirectory from './MemberDirectory';
 import MassSelection from '../components/MassSelection'; 
 import AdminPaymentLedger from '../components/AdminPaymentLedger'; 
+import AdminLevelManager from './AdminLevelManager'; // <-- 1. IMPORTED LEVEL MANAGER HERE
 import { PulseLoader } from 'react-spinners';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
@@ -139,6 +140,7 @@ const Dashboard = () => {
       case 'paymentLedger': return { title: 'Financial Ledger ', desc: 'Audit live transaction gateway logs' };
       case 'accountManager': return { title: 'Security', desc: 'Manage access levels' };
       case 'registeredMembers': return { title: 'Member Database ', desc: 'Review verified profile forms and records tracking' };
+      case 'levelManager': return { title: 'Level Archives Manager', desc: 'Manage student rosters and official level assembly photographs' }; // <-- 4. ADDED LEVEL MANAGER HEADER META
       default: return { title: 'Control Operations Panel', desc: 'Manage association content metrics, dashboard analytics, and leadership components' };
     }
   })();
@@ -190,7 +192,6 @@ const Dashboard = () => {
                 onMouseLeave={() => setIsDropdownOpen(false)}
                 className={`absolute right-0 mt-3 w-48 backdrop-blur-xl border rounded-xl shadow-2xl overflow-hidden z-50 py-2 transition-all ${isDarkMode ? 'bg-[#111111]/95 border-[#2a1b12]' : 'bg-white border-stone-200'}`}
               >
-           
               </div>
             )}
           </div>
@@ -235,6 +236,7 @@ const Dashboard = () => {
               <div className="space-y-1.5">
                 {[
                   { view: 'executives', label: 'Executives', icon: <FaUsers size={13} /> },
+                  { view: 'levelManager', label: 'Level Archives', icon: <FaUserGraduate size={13} /> }, // <-- 2. ADDED LEVEL MANAGER BUTTON TO SIDEBAR
                   { view: 'announcements', label: 'Announcements', icon: <FaBell size={13} /> },
                   { view: 'events', label: 'Events', icon: <FaCalendarAlt size={13} /> },
                   { view: 'gallery', label: 'Gallery', icon: <FaImages size={13} /> },
@@ -326,6 +328,7 @@ const Dashboard = () => {
                 {activeView === 'accountManager' && <AccountManager />}
                 {activeView === 'registeredMembers' && <MemberDirectory initialFilter="all" />}
                 {activeView === 'pendingApprovals' && <MemberDirectory initialFilter="pending" />}
+                {activeView === 'levelManager' && <AdminLevelManager />} {/* <-- 3. REGISTERED LEVEL MANAGER COMPONENT VIEW ROUTE */}
                 
                 {activeView === 'executives' && (
                   <div className="space-y-8">
