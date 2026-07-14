@@ -2,25 +2,88 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   FaCircleNotch, FaSearch, FaHistory, FaCheckCircle, 
   FaExclamationTriangle, FaDownload, FaWallet, FaTag,
-  FaSlidersH, FaSave
+  FaSlidersH, FaSave, FaGraduationCap, FaCalendarAlt
 } from 'react-icons/fa';
+
+// 📌 STANDARDIZED CONSTANTS
+const ACADEMIC_SESSIONS = ['2025/2026', '2026/2027', '2027/2028', '2028/2029', '2029/2030'];
+const ACADEMIC_LEVELS = ['100L', '200L', '300L', '400L', '500L'];
+const NARRATIONS = [
+ 
+      'Sessional Dues', 
+      'Sendforth levy and Appeal fund card', 
+      'Donation', 
+      'Other Clearance'
+    
+];
+
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
+
+// ==========================================
+// 💡 MODULAR SUB-COMPONENTS
+// ==========================================
+
+const MetricCard = ({ title, value, subtext, icon: Icon, variant = 'primary' }) => (
+  <div className={`bg-[#0a0a0a] border border-[#1a110b] px-6 py-5 rounded-2xl flex items-center gap-5 shadow-lg transition-all duration-300 hover:border-[#3d2b1f] ${variant === 'secondary' ? 'opacity-75 hover:opacity-100' : ''}`}>
+    <div className={`p-3 rounded-xl ${variant === 'primary' ? 'bg-emerald-950/30 text-emerald-500' : 'bg-amber-950/30 text-amber-500'}`}>
+      <Icon size={20} />
+    </div>
+    <div>
+      <p className="text-[9px] uppercase tracking-widest text-gray-500 font-bold">{title}</p>
+      <p className={`text-xl md:text-2xl font-mono font-bold mt-1 ${variant === 'primary' ? 'text-emerald-400' : 'text-amber-500'}`}>
+        {value}
+      </p>
+      <p className="text-[10px] text-gray-600 mt-1">{subtext}</p>
+    </div>
+  </div>
+);
+
+const FilterSelect = ({ icon: Icon, value, onChange, options, defaultLabel }) => (
+  <div className="relative flex items-center w-full">
+    {Icon && <Icon className="absolute left-3 text-gray-600 pointer-events-none" size={12} />}
+    <select
+      value={value}
+      onChange={onChange}
+      className={`w-full bg-[#111111] border border-[#2a1b12] rounded-lg pr-8 py-2.5 text-xs text-gray-400 focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/30 cursor-pointer appearance-none transition-all ${Icon ? 'pl-8' : 'pl-3'}`}
+    >
+      <option value="all">{defaultLabel}</option>
+      {options.map(opt => (
+        <option key={opt} value={opt}>{opt}</option>
+      ))}
+    </select>
+    <div className="absolute right-3 pointer-events-none text-gray-600 text-[8px]">▼</div>
+  </div>
+);
+
+
+// ==========================================
+// 🚀 MAIN LEDGER COMPONENT
+// ==========================================
 
 const AdminPaymentLedger = () => {
   const [ledger, setLedger] = useState([]);
+  const [feeConfigs, setFeeConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   
-  // 🎛️ Admin Rate Configuration States
-  const [configNarration, setConfigNarration] = useState('Sessional Dues');
-  const [configAmount, setConfigAmount] = useState('');
+  // 🔍 Consolidated Filter State
+  const [filters, setFilters] = useState({
+    search: '',
+    status: 'all',
+    narration: 'all',
+    level: 'all',
+    session: 'all'
+  });
+
+  // 🎛️ Form State
+  const [form, setForm] = useState({
+    narration: NARRATIONS[0],
+    amount: ''
+  });
+  
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
-  const [configFeedback, setConfigFeedback] = useState({ type: '', message: '' });
+  const [feedback, setFeedback] = useState({ type: '', message: '' });
 
-  // FIXED: Standardized environment variable and stripped the trailing slash to prevent '//api' errors
-  const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
-
-  // 🛡️ Centralized & Sanitized Auth Headers Helper
+  // 🛡️ Normalized Auth Token Retrieval
   const getAuthHeaders = useCallback(() => {
     let token = localStorage.getItem('adminToken') || 
                 localStorage.getItem('admintoken') || 
@@ -38,61 +101,95 @@ const AdminPaymentLedger = () => {
     };
   }, []);
 
-  // 🔄 Fetch initial ledger histories
-  useEffect(() => {
-    const fetchLedger = async () => {
-      const headers = getAuthHeaders();
+  // 🔄 Unified Sync Engine with Memory Cleanup
+  const fetchData = useCallback(async (signal) => {
+    const headers = getAuthHeaders();
+    if (!headers.Authorization) {
+      console.error("Auth Token Missing. Halting sync stream.");
+      setLoading(false);
+      return;
+    }
 
-      if (!headers.Authorization) {
-        console.error("Authentication Error: No valid token found in LocalStorage.");
-        setLoading(false);
-        return;
-      }
+    try {
+      const [ledgerRes, matrixRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/payment/history`, { headers, signal }),
+        fetch(`${API_BASE_URL}/api/payment/fee-matrix`, { headers, signal })
+      ]);
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/payment/history`, { headers });
-        const output = await response.json();
-        
-        if (output.success) {
-          // 🗑️ Filter out any 'pending' status records right at the source
-          const cleanLedger = output.data.filter(item => item.status !== 'pending');
+      if (ledgerRes.ok) {
+        const ledgerOutput = await ledgerRes.json();
+        if (ledgerOutput.success) {
+          const cleanLedger = ledgerOutput.data.filter(item => item.status !== 'pending');
           setLedger(cleanLedger);
-        } else {
-          console.error("Ledger Fetch Error:", output.message);
         }
-      } catch (err) {
-        console.error("Could not fetch ledger logs:", err);
-      } finally {
-        setLoading(false);
       }
-    };
 
-    fetchLedger();
-  }, [API_BASE_URL, getAuthHeaders]);
+      if (matrixRes.ok) {
+        const matrixOutput = await matrixRes.json();
+        if (matrixOutput.success) {
+          setFeeConfigs(matrixOutput.data);
+        }
+      }
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error("Could not synchronize data matrices:", err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [getAuthHeaders]);
 
-  // 📡 Submit handler to change base fees on the backend matrix
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
+  }, [fetchData]);
+
+  // 🧮 Paystack Net Settlement Logic (1.5% + ₦100, capped at ₦2,000)
+  const getPaystackNet = useCallback((grossAmount) => {
+    const amt = Number(grossAmount) || 0;
+    if (amt <= 0) return 0;
+
+    let fee = amt * 0.015;
+    if (amt >= 2500) {
+      fee += 100;
+    }
+    if (fee > 2000) {
+      fee = 2000;
+    }
+    
+    return Math.max(0, amt - fee);
+  }, []);
+
+  // 📥 Filter Update Handler
+  const handleFilterChange = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
+  // 📡 Update or Create Configuration Rule
   const handleUpdateFeeMatrix = async (e) => {
     e.preventDefault();
-    setConfigFeedback({ type: '', message: '' });
+    setFeedback({ type: '', message: '' });
 
-    const numericAmount = Number(configAmount);
+    const numericAmount = Number(form.amount);
     if (!numericAmount || numericAmount <= 0) {
-      return setConfigFeedback({ type: 'error', message: 'Please declare a valid numeric currency valuation.' });
+      return setFeedback({ type: 'error', message: 'Please declare a valid numeric currency valuation.' });
     }
 
     const headers = getAuthHeaders();
     if (!headers.Authorization) {
-      return setConfigFeedback({ type: 'error', message: 'Session expired. Please log in again.' });
+      return setFeedback({ type: 'error', message: 'Session expired. Please log in again.' });
     }
 
     setIsUpdatingConfig(true);
+    const endpoint = `${API_BASE_URL}/api/payment/update-fee-matrix`;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/payment/update-fee-matrix`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers, 
         body: JSON.stringify({
-          narration: configNarration,
+          narration: form.narration,
           amount: numericAmount
         })
       });
@@ -100,48 +197,59 @@ const AdminPaymentLedger = () => {
       const data = await response.json();
 
       if (response.ok && data.success !== false) {
-        setConfigFeedback({
+        setFeedback({
           type: 'success',
-          message: `${configNarration} adjusted to ₦${numericAmount.toLocaleString()} successfully.`
+          message: `${form.narration} updated to ₦${numericAmount.toLocaleString()} successfully.`
         });
-        setConfigAmount(''); 
+        
+        setForm({ narration: NARRATIONS[0], amount: '' });
+        fetchData();
       } else {
-        throw new Error(data.message || 'Failed updating authorization rules on gateway registry.');
+        throw new Error(data.message || 'Failed updating gateway matrix configuration.');
       }
     } catch (err) {
-      setConfigFeedback({ type: 'error', message: err.message || 'Network link verification timeout.' });
+      setFeedback({ type: 'error', message: err.message || 'Network link verification timeout.' });
     } finally {
       setIsUpdatingConfig(false);
     }
   };
 
-  // 🔍 Dynamic Search & Filter Logic
+  // 🔍 Multi-Layer Memory Filter Engine
   const filteredLedger = useMemo(() => {
     return ledger.filter(item => {
-      const safeName = item.studentName || '';
-      const safeRef = item.reference || '';
+      const query = filters.search.toLowerCase();
+      const safeName = (item.studentName || '').toLowerCase();
+      const safeRef = (item.reference || '').toLowerCase();
+      const safeLevel = (item.targetLevel || '').toLowerCase();
+      const safeNarration = (item.narration || '').toLowerCase();
       
-      const matchesSearch = safeName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            safeRef.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+      const matchesSearch = safeName.includes(query) || safeRef.includes(query);
+      const matchesStatus = filters.status === 'all' || item.status === filters.status;
+      const matchesNarration = filters.narration === 'all' || safeNarration === filters.narration.toLowerCase();
+      const matchesLevel = filters.level === 'all' || safeLevel === filters.level.toLowerCase();
+      const matchesSession = filters.session === 'all' || item.academicYear === filters.session;
       
-      return matchesSearch && matchesStatus;
+      return matchesSearch && matchesStatus && matchesNarration && matchesLevel && matchesSession;
     });
-  }, [ledger, searchQuery, statusFilter]);
+  }, [ledger, filters]);
 
-  // 📊 Live Revenue Analytics
+  // 📊 Fast Memoized Stats Panel
   const stats = useMemo(() => {
-    const successfulTxs = ledger.filter(item => item.status === 'success');
+    const successfulTxs = filteredLedger.filter(item => item.status === 'success');
+    const gross = successfulTxs.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const net = successfulTxs.reduce((sum, item) => sum + getPaystackNet(item.amount), 0);
+
     return {
-      totalRevenue: successfulTxs.reduce((sum, item) => sum + (Number(item.amount) || 0), 0),
+      totalGross: gross,
+      totalRealMoney: net,
       successCount: successfulTxs.length
     };
-  }, [ledger]);
+  }, [filteredLedger, getPaystackNet]);
 
-  // 📥 CSV Export Utility for Auditing
+  // 📥 Enterprise-Safe CSV Export (With BOM)
   const exportToCSV = () => {
     if (filteredLedger.length === 0) return;
-    const headers = ["Date", "Student Name", "Reference", "Narration", "Level", "Session", "Amount", "Status"];
+    const headers = ["Date", "Student Name", "Reference", "Narration", "Level", "Session", "Gross Amount (NGN)", "Real Money Net (NGN)", "Status"];
     
     const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
 
@@ -157,12 +265,13 @@ const AdminPaymentLedger = () => {
           escapeCSV(row.targetLevel),
           escapeCSV(row.academicYear),
           escapeCSV(row.amount),
+          escapeCSV(getPaystackNet(row.amount).toFixed(2)),
           escapeCSV(row.status)
         ].join(",");
       })
     ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     
@@ -176,45 +285,53 @@ const AdminPaymentLedger = () => {
 
   if (loading) {
     return (
-      <div className="min-h-full bg-[#050505] flex flex-col items-center justify-center py-32 text-white">
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-white">
         <FaCircleNotch className="animate-spin text-[#d2b48c] mb-4" size={32} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#d2b48c]">Syncing Ledger Matrix...</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#d2b48c] animate-pulse">Syncing Ledger Matrix...</span>
       </div>
     );
   }
 
   return (
-    <div className="bg-[#050505] text-gray-100 font-sans w-full p-4 md:p-6 animate-fadeIn">
-      <div className="max-w-7xl mx-auto">
+    <div className="bg-[#050505] text-gray-100 font-sans min-h-screen w-full p-4 md:p-6 transition-all">
+      <div className="max-w-7xl mx-auto space-y-6">
         
-        <header className="mb-8 border-b border-[#2a1b12] pb-6">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
+        {/* HEADER ZONE */}
+        <header className="border-b border-[#2a1b12] pb-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
               <h2 className="text-2xl font-serif text-[#d2b48c] tracking-wide uppercase flex items-center gap-3">
-                <FaHistory className="text-[#8b4513]" size={20} /> Financial Operations Ledger Matrix
+                <FaHistory className="text-[#8b4513]" size={20} /> Payment  Ledger
               </h2>
-              <p className="text-gray-500 text-xs mt-2 uppercase tracking-widest">Audit real-time transactional metrics and distribute baseline dynamic variables</p>
+              <p className="text-gray-500 text-xs mt-1">Manage payment policies.</p>
             </div>
           </div>
+        </header>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            
-            <div className="bg-[#0a0a0a] border border-[#3d2b1f] rounded-2xl p-5 shadow-xl lg:col-span-1">
-              <h3 className="text-xs font-black uppercase tracking-wider text-[#d2b48c] mb-4 flex items-center gap-2">
-                <FaSlidersH className="text-[#8b4513]" size={12} /> Fee Rate Registry Injector
-              </h3>
+        {/* METRICS & CONFIGURATION WRAPPER */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* RATE CONFIGURATION PANEL */}
+          <div className="bg-[#0a0a0a] border border-[#3d2b1f] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#d2b48c] flex items-center gap-2">
+                  <FaSlidersH className="text-[#8b4513]" size={12} /> Fee Matrix Registry
+                </h3>
+              </div>
               
               <form onSubmit={handleUpdateFeeMatrix} className="space-y-4">
                 <div>
                   <label className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">Target Account Narration</label>
                   <select 
-                    value={configNarration}
+                    value={form.narration}
                     disabled={isUpdatingConfig}
-                    onChange={(e) => setConfigNarration(e.target.value)}
-                    className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2.5 text-gray-300 focus:outline-none focus:border-[#8b4513]"
+                    onChange={(e) => setForm(prev => ({ ...prev, narration: e.target.value }))}
+                    className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2.5 text-gray-300 focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/25"
                   >
-                    <option value="Sessional Dues">Sessional Dues</option>
-                    <option value="Other Clearance">Other Clearance</option>
+                    {NARRATIONS.map(narr => (
+                      <option key={narr} value={narr}>{narr}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -223,12 +340,13 @@ const AdminPaymentLedger = () => {
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-gray-500">₦</span>
                     <input 
-                      type="number" required
-                      value={configAmount}
+                      type="number" 
+                      required
+                      value={form.amount}
                       disabled={isUpdatingConfig}
                       placeholder="e.g. 5000"
-                      onChange={(e) => setConfigAmount(e.target.value)}
-                      className="w-full bg-[#111111] border border-[#2a1b12] font-mono text-xs rounded-lg pl-7 pr-3 py-2.5 text-white focus:outline-none focus:border-[#8b4513]"
+                      onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
+                      className="w-full bg-[#111111] border border-[#2a1b12] font-mono text-xs rounded-lg pl-7 pr-3 py-2.5 text-white focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/25"
                     />
                   </div>
                 </div>
@@ -236,73 +354,114 @@ const AdminPaymentLedger = () => {
                 <button 
                   type="submit" 
                   disabled={isUpdatingConfig}
-                  className="w-full bg-[#8b4513] hover:bg-[#a0522d] disabled:bg-[#3d2b1f] text-white py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer outline-none shadow-md"
+                  className="w-full bg-[#8b4513] hover:bg-[#a0522d] disabled:bg-[#3d2b1f] text-white py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
                 >
                   {isUpdatingConfig ? (
-                    <><FaCircleNotch className="animate-spin" size={10} /> Broad Casting...</>
+                    <><FaCircleNotch className="animate-spin" size={10} /> Broadcasting...</>
                   ) : (
-                    <><FaSave size={10} /> Sync New Rate To Frontend</>
+                    <><FaSave size={10} /> Deploy </>
                   )}
                 </button>
               </form>
 
-              {configFeedback.message && (
-                <div className={`mt-3 p-3 rounded-lg text-[10px] tracking-wide border flex items-start gap-2 ${
-                  configFeedback.type === 'success' 
+              {feedback.message && (
+                <div className={`mt-3 p-3 rounded-lg text-[10px] tracking-wide border flex items-start gap-2 animate-fadeIn ${
+                  feedback.type === 'success' 
                     ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400' 
                     : 'bg-rose-950/20 border-rose-900/40 text-rose-400'
                 }`}>
-                  {configFeedback.type === 'success' ? <FaCheckCircle size={12} className="shrink-0 mt-0.5" /> : <FaExclamationTriangle size={12} className="shrink-0 mt-0.5" />}
-                  <span>{configFeedback.message}</span>
+                  {feedback.type === 'success' ? (
+                    <FaCheckCircle size={12} className="shrink-0 mt-0.5" />
+                  ) : (
+                    <FaExclamationTriangle size={12} className="shrink-0 mt-0.5" />
+                  )}
+                  <span>{feedback.message}</span>
                 </div>
               )}
             </div>
 
-            {/* LIVE REVENUE ANALYTICS CARDS */}
-            <div className="lg:col-span-2 flex h-fit">
-              <div className="w-full bg-[#0a0a0a] border border-[#1a110b] px-6 py-5 rounded-2xl flex items-center gap-5 shadow-lg">
-                <div className="bg-emerald-950/30 p-3 rounded-xl"><FaWallet className="text-emerald-500" size={20} /></div>
-                <div>
-                  <p className="text-[9px] uppercase tracking-widest text-gray-500 font-bold">Total Aggregated Revenue</p>
-                  <p className="text-2xl font-mono font-bold text-emerald-400 mt-1">₦{stats.totalRevenue.toLocaleString()}</p>
-                  <p className="text-[10px] text-gray-600 mt-1">{stats.successCount} Successful Settlements</p>
-                </div>
-              </div>
+            {/* READ-ONLY REGISTRY SUMMARY LIST */}
+        
+          </div>
+
+          {/* DYNAMIC METRICS BOARDS */}
+          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 h-fit">
+            <MetricCard 
+              title="Real Money (Net Settled)"
+              value={`₦${stats.totalRealMoney.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              subtext={`${stats.successCount} Audited Clearances`}
+              icon={FaWallet}
+              variant="primary"
+            />
+            <MetricCard 
+              title="Gross Capital Tracked"
+              value={`₦${stats.totalGross.toLocaleString()}`}
+              subtext="Accumulated Fees (Includes Gateway Charges)"
+              icon={FaWallet}
+              variant="secondary"
+            />
+          </div>
+
+        </div>
+
+        {/* COMPREHENSIVE QUERY & ACTION BAR */}
+        <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-[#0a0a0a] p-4 rounded-xl border border-[#1a110b]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 flex-1">
+            
+            <div className="relative w-full">
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={12} />
+              <input 
+                type="text" 
+                placeholder="Search Student or Ref..." 
+                value={filters.search}
+                className="w-full bg-[#111111] border border-[#2a1b12] rounded-lg pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/25 transition-colors"
+                onChange={e => handleFilterChange('search', e.target.value)}
+              />
             </div>
+
+            <FilterSelect 
+              value={filters.status}
+              onChange={e => handleFilterChange('status', e.target.value)}
+              options={['success', 'failed']}
+              defaultLabel="All Statuses"
+            />
+
+            <FilterSelect 
+              icon={FaTag}
+              value={filters.narration}
+              onChange={e => handleFilterChange('narration', e.target.value)}
+              options={NARRATIONS}
+              defaultLabel="All Narrations"
+            />
+
+            <FilterSelect 
+              icon={FaGraduationCap}
+              value={filters.level}
+              onChange={e => handleFilterChange('level', e.target.value)}
+              options={ACADEMIC_LEVELS}
+              defaultLabel="All Academic Levels"
+            />
+
+            <FilterSelect 
+              icon={FaCalendarAlt}
+              value={filters.session}
+              onChange={e => handleFilterChange('session', e.target.value)}
+              options={ACADEMIC_SESSIONS}
+              defaultLabel="All Sessions"
+            />
 
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-[#0a0a0a] p-4 rounded-xl border border-[#1a110b]">
-            <div className="flex flex-wrap items-center gap-3 flex-1">
-              <div className="relative w-full sm:w-72 shadow-inner">
-                <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={12} />
-                <input 
-                  type="text" placeholder="Search by Student or Reference..." value={searchQuery}
-                  className="w-full bg-[#111111] border border-[#2a1b12] rounded-lg pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#8b4513] transition-colors"
-                  onChange={e => setSearchQuery(e.target.value)}
-                />
-              </div>
+          <button 
+            onClick={exportToCSV}
+            disabled={filteredLedger.length === 0}
+            className="flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#1a110b] disabled:opacity-40 disabled:pointer-events-none border border-[#2a1b12] hover:border-[#8b4513] text-[#d2b48c] px-5 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap self-stretch xl:self-auto shrink-0"
+          >
+            <FaDownload size={12} /> Export CSV Audit
+          </button>
+        </div>
 
-              <select 
-                value={statusFilter}
-                className="bg-[#111111] border border-[#2a1b12] rounded-lg px-4 py-2.5 text-xs text-gray-400 focus:outline-none focus:border-[#8b4513] cursor-pointer outline-none"
-                onChange={e => setStatusFilter(e.target.value)}
-              >
-                <option value="all">All Transactions</option>
-                <option value="success">Successful Only</option>
-                <option value="failed">Failed Transactions</option>
-              </select>
-            </div>
-
-            <button 
-              onClick={exportToCSV}
-              className="flex items-center gap-2 bg-[#111111] hover:bg-[#1a110b] border border-[#2a1b12] hover:border-[#8b4513] text-[#d2b48c] px-4 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all cursor-pointer outline-none"
-            >
-              <FaDownload size={12} /> Export CSV
-            </button>
-          </div>
-        </header>
-
+        {/* CENTRALIZED DATABASE VIEWPORTS */}
         <div className="bg-[#0a0a0a] border border-[#2a1b12] rounded-xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -312,14 +471,15 @@ const AdminPaymentLedger = () => {
                   <th className="p-4 whitespace-nowrap">Reference ID</th>
                   <th className="p-4 whitespace-nowrap">Narration Purpose</th>
                   <th className="p-4 whitespace-nowrap">Academic Scope</th>
-                  <th className="p-4 whitespace-nowrap">Amount (₦)</th>
+                  <th className="p-4 whitespace-nowrap">Gross Paid (₦)</th>
+                  <th className="p-4 whitespace-nowrap text-emerald-400">Real Net (₦)</th>
                   <th className="p-4 text-center whitespace-nowrap">Gate Status</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-[#1a110b]">
                 {filteredLedger.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="p-12 text-center text-gray-600 uppercase tracking-widest text-[10px] font-bold">
+                    <td colSpan="7" className="p-16 text-center text-gray-600 uppercase tracking-widest text-[10px] font-bold">
                       No matching financial records discovered in the matrix.
                     </td>
                   </tr>
@@ -334,20 +494,21 @@ const AdminPaymentLedger = () => {
                       </td>
                       <td className="p-4 text-gray-500 font-mono text-[10px] tracking-wider">{row.reference}</td>
                       <td className="p-4">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${
-                          ['Sessional Dues', 'Other Clearance'].includes(row.narration) 
-                            ? 'bg-[#1a110b] text-[#d2b48c] border border-[#3d2b1f]' 
-                            : 'bg-[#111111] text-gray-400 border border-[#2a1b12]'
-                        }`}>
-                          <FaTag size={8} className={['Sessional Dues', 'Other Clearance'].includes(row.narration) ? 'text-[#8b4513]' : 'text-gray-600'} />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider bg-[#1a110b] text-[#d2b48c] border border-[#3d2b1f]">
+                          <FaTag size={8} className="text-[#8b4513]" />
                           {row.narration}
                         </span>
                       </td>
                       <td className="p-4 text-gray-400 text-[11px]">
-                        <span className="font-bold text-gray-300">{row.targetLevel}</span> <span className="opacity-50 mx-1">|</span> {row.academicYear}
+                        <span className="font-bold text-gray-300">{row.targetLevel || 'N/A'}</span> 
+                        <span className="opacity-30 mx-2">|</span> 
+                        {row.academicYear || 'N/A'}
                       </td>
-                      <td className="p-4 font-mono font-bold text-white tracking-wide">
+                      <td className="p-4 font-mono font-bold text-gray-400 tracking-wide">
                         {Number(row.amount).toLocaleString()}
+                      </td>
+                      <td className="p-4 font-mono font-bold text-emerald-400 tracking-wide bg-emerald-950/5">
+                        {getPaystackNet(row.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="p-4 text-center">
                         {row.status === 'success' ? (
