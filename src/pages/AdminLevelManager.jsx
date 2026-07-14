@@ -138,7 +138,7 @@ export const AdminLevelManager = () => {
       email: '',
       phoneNumber: '',
       level: LEVEL_OPTIONS[0],
-      academicYear: '2026/2027'
+      academicYear: ''
     });
     setEditingId(null);
   };
@@ -146,7 +146,7 @@ export const AdminLevelManager = () => {
   const resetPhotoForm = () => {
     setPhotoForm({
       levelName: LEVEL_OPTIONS[0],
-      academicYear: '2026/2027',
+      academicYear: '',
       imageUrl: '',
       caption: ''
     });
@@ -285,7 +285,7 @@ export const AdminLevelManager = () => {
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
           }`}
         >
-          <FaUserPlus /> Student Roster
+          <FaUserPlus /> Level
         </button>
         <button
           type="button"
@@ -297,7 +297,7 @@ export const AdminLevelManager = () => {
               : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-300'
           }`}
         >
-          <FaImage /> Class Assemblies
+          <FaImage /> group Photo 
         </button>
       </div>
 

@@ -139,9 +139,9 @@ const Dashboard = () => {
       case 'massSelection': return { title: 'Sanctuary', desc: 'Configure liturgical team rosters' };
       case 'paymentLedger': return { title: 'Financial Ledger ', desc: 'Audit live transaction gateway logs' };
       case 'accountManager': return { title: 'Security', desc: 'Manage access levels' };
-      case 'registeredMembers': return { title: 'Member Database ', desc: 'Review verified profile forms and records tracking' };
-      case 'levelManager': return { title: 'Level Archives Manager', desc: 'Manage student rosters and official level assembly photographs' }; // <-- 4. ADDED LEVEL MANAGER HEADER META
-      default: return { title: 'Control Operations Panel', desc: 'Manage association content metrics, dashboard analytics, and leadership components' };
+      case 'registeredMembers': return { title: 'Members ', desc: 'Review verified profile forms and records tracking' };
+      case 'levelManager': return { title: 'Level Manager', desc: 'Manage Level rosters ' }; // <-- 4. ADDED LEVEL MANAGER HEADER META
+      default: return { title: 'Galllery Panel', desc: 'Manage association content ' };
     }
   })();
 
@@ -278,7 +278,7 @@ const Dashboard = () => {
             
             <header className={`mb-10 pb-6 border-b ${isDarkMode ? 'border-[#2a1b12]' : 'border-stone-200'}`}>
               <h1 className={`text-2xl md:text-3xl font-serif tracking-tight uppercase transition-all duration-200 ${isDarkMode ? 'text-[#d2b48c]' : 'text-stone-800 font-bold'}`}>
-                {activeView === 'overview' ? 'Operational Overview' : headerMeta.title}
+                {activeView === 'overview' ? ' Overview' : headerMeta.title}
               </h1>
               <p className={`text-xs mt-2 uppercase tracking-[0.15em] font-light ${isDarkMode ? 'text-gray-500' : 'text-stone-500'}`}>
                 {headerMeta.desc}
