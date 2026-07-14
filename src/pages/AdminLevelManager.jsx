@@ -316,7 +316,7 @@ export const AdminLevelManager = () => {
                   onClick={resetStudentForm} 
                   className="text-xs flex items-center gap-1.5 text-slate-400 hover:text-rose-500 transition-colors font-medium disabled:opacity-50 cursor-pointer"
                 >
-                  <FaTimesCircle /> Cancel Edit Mode
+                  <FaTimesCircle /> Edit 
                 </button>
               )}
             </div>
