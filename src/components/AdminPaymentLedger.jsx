@@ -9,12 +9,10 @@ import {
 const ACADEMIC_SESSIONS = ['2025/2026', '2026/2027', '2027/2028', '2028/2029', '2029/2030'];
 const ACADEMIC_LEVELS = ['100L', '200L', '300L', '400L', '500L'];
 const NARRATIONS = [
- 
-      'Sessional Dues', 
-      'Sendforth levy and Appeal fund card', 
-      'Donation', 
-      'Other Clearance'
-    
+  'Sessional Dues', 
+  'Sendforth levy and Appeal fund card', 
+  'Donation', 
+  'Other Clearance'
 ];
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
@@ -101,8 +99,8 @@ const AdminPaymentLedger = () => {
     };
   }, []);
 
-  // 🔄 Unified Sync Engine with Memory Cleanup
-  const fetchData = useCallback(async (signal) => {
+  // 🔄 Unified Sync Engine with Memory Cleanup & Optional Signal
+  const fetchData = useCallback(async (signal = null) => {
     const headers = getAuthHeaders();
     if (!headers.Authorization) {
       console.error("Auth Token Missing. Halting sync stream.");
@@ -110,10 +108,12 @@ const AdminPaymentLedger = () => {
       return;
     }
 
+    const fetchOptions = signal ? { headers, signal } : { headers };
+
     try {
       const [ledgerRes, matrixRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/payment/history`, { headers, signal }),
-        fetch(`${API_BASE_URL}/api/payment/fee-matrix`, { headers, signal })
+        fetch(`${API_BASE_URL}/api/payment/history`, fetchOptions),
+        fetch(`${API_BASE_URL}/api/payment/fee-matrix`, fetchOptions)
       ]);
 
       if (ledgerRes.ok) {
@@ -381,7 +381,31 @@ const AdminPaymentLedger = () => {
             </div>
 
             {/* READ-ONLY REGISTRY SUMMARY LIST */}
-        
+            <div className="mt-6 border-t border-[#2a1b12] pt-4">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-3">
+                Active Matrix Rates
+              </p>
+              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+                {feeConfigs.length === 0 ? (
+                  <p className="text-gray-600 text-[10px] italic">No active rates configured.</p>
+                ) : (
+                  feeConfigs.map((config) => (
+                    <div 
+                      key={config._id || config.narration} 
+                      className="flex justify-between items-center bg-[#111111] border border-[#1a110b] px-3 py-2 rounded-lg text-xs"
+                    >
+                      <span className="text-gray-300 font-medium truncate pr-2">
+                        {config.narration}
+                      </span>
+                      <span className="font-mono font-bold text-[#d2b48c] shrink-0">
+                        ₦{Number(config.amount).toLocaleString()}
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
           </div>
 
           {/* DYNAMIC METRICS BOARDS */}
