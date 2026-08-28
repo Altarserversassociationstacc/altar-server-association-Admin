@@ -2,12 +2,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   FaCircleNotch, FaSearch, FaHistory, FaCheckCircle, 
   FaExclamationTriangle, FaDownload, FaWallet, FaTag,
-  FaSlidersH, FaSave, FaGraduationCap, FaCalendarAlt
+  FaSlidersH, FaSave, FaGraduationCap, FaCalendarAlt, FaReceipt
 } from 'react-icons/fa';
 
+// ==========================================
 // 📌 STANDARDIZED CONSTANTS
+// ==========================================
 const ACADEMIC_SESSIONS = ['2025/2026', '2026/2027', '2027/2028', '2028/2029', '2029/2030'];
-const ACADEMIC_LEVELS = ['100L', '200L', '300L', '400L', '500L'];
+const ACADEMIC_LEVELS = ['100L', '200L', '300L', '400L', '500L', '600L'];
 const NARRATIONS = [
   'Sessional Dues', 
   'Sendforth levy and Appeal fund card', 
@@ -21,38 +23,48 @@ const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').r
 // 💡 MODULAR SUB-COMPONENTS
 // ==========================================
 
-const MetricCard = ({ title, value, subtext, icon: Icon, variant = 'primary' }) => (
-  <div className={`bg-[#0a0a0a] border border-[#1a110b] px-6 py-5 rounded-2xl flex items-center gap-5 shadow-lg transition-all duration-300 hover:border-[#3d2b1f] ${variant === 'secondary' ? 'opacity-75 hover:opacity-100' : ''}`}>
-    <div className={`p-3 rounded-xl ${variant === 'primary' ? 'bg-emerald-950/30 text-emerald-500' : 'bg-amber-950/30 text-amber-500'}`}>
-      <Icon size={20} />
-    </div>
-    <div>
-      <p className="text-[9px] uppercase tracking-widest text-gray-500 font-bold">{title}</p>
-      <p className={`text-xl md:text-2xl font-mono font-bold mt-1 ${variant === 'primary' ? 'text-emerald-400' : 'text-amber-500'}`}>
-        {value}
-      </p>
-      <p className="text-[10px] text-gray-600 mt-1">{subtext}</p>
-    </div>
-  </div>
-);
+const MetricCard = ({ title, value, subtext, icon: Icon, variant = 'primary' }) => {
+  const variantStyles = {
+    primary: 'bg-emerald-950/30 text-emerald-500 border-emerald-900/20 text-emerald-400',
+    secondary: 'bg-amber-950/30 text-amber-500 border-amber-900/20 text-amber-400',
+    info: 'bg-blue-950/30 text-blue-500 border-blue-900/20 text-blue-400'
+  };
 
-const FilterSelect = ({ icon: Icon, value, onChange, options, defaultLabel }) => (
+  const currentStyle = variantStyles[variant] || variantStyles.primary;
+
+  return (
+    <div className="bg-[#0a0a0a] border border-[#1a110b] px-6 py-5 rounded-2xl flex items-center gap-5 shadow-lg transition-all duration-300 hover:border-[#3d2b1f]">
+      <div className={`p-3 rounded-xl ${currentStyle.split(' ')[0]} ${currentStyle.split(' ')[1]}`}>
+        <Icon size={20} aria-hidden="true" />
+      </div>
+      <div>
+        <h3 className="text-[9px] uppercase tracking-widest text-gray-500 font-bold">{title}</h3>
+        <p className={`text-xl md:text-2xl font-mono font-bold mt-1 ${currentStyle.split(' ')[3]}`}>
+          {value}
+        </p>
+        <p className="text-[10px] text-gray-600 mt-1">{subtext}</p>
+      </div>
+    </div>
+  );
+};
+
+const FilterSelect = ({ icon: Icon, value, onChange, options, defaultLabel, ariaLabel }) => (
   <div className="relative flex items-center w-full">
-    {Icon && <Icon className="absolute left-3 text-gray-600 pointer-events-none" size={12} />}
+    {Icon && <Icon className="absolute left-3 text-gray-600 pointer-events-none" size={12} aria-hidden="true" />}
     <select
       value={value}
       onChange={onChange}
-      className={`w-full bg-[#111111] border border-[#2a1b12] rounded-lg pr-8 py-2.5 text-xs text-gray-400 focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/30 cursor-pointer appearance-none transition-all ${Icon ? 'pl-8' : 'pl-3'}`}
+      aria-label={ariaLabel || defaultLabel}
+      className={`w-full bg-[#111111] border border-[#2a1b12] rounded-lg pr-8 py-2.5 text-xs text-gray-400 focus:outline-none focus:border-[#8b4513] focus-visible:ring-1 focus-visible:ring-[#8b4513]/30 cursor-pointer appearance-none transition-all ${Icon ? 'pl-8' : 'pl-3'}`}
     >
       <option value="all">{defaultLabel}</option>
       {options.map(opt => (
         <option key={opt} value={opt}>{opt}</option>
       ))}
     </select>
-    <div className="absolute right-3 pointer-events-none text-gray-600 text-[8px]">▼</div>
+    <div className="absolute right-3 pointer-events-none text-gray-600 text-[8px]" aria-hidden="true">▼</div>
   </div>
 );
-
 
 // ==========================================
 // 🚀 MAIN LEDGER COMPONENT
@@ -63,7 +75,6 @@ const AdminPaymentLedger = () => {
   const [feeConfigs, setFeeConfigs] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // 🔍 Consolidated Filter State
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -72,9 +83,10 @@ const AdminPaymentLedger = () => {
     session: 'all'
   });
 
-  // 🎛️ Form State
   const [form, setForm] = useState({
     narration: NARRATIONS[0],
+    targetLevel: '100L',
+    academicYear: '2026/2027',
     amount: ''
   });
   
@@ -83,23 +95,22 @@ const AdminPaymentLedger = () => {
 
   // 🛡️ Normalized Auth Token Retrieval
   const getAuthHeaders = useCallback(() => {
-    let token = localStorage.getItem('adminToken') || 
-                localStorage.getItem('admintoken') || 
-                localStorage.getItem('token'); 
+    const rawToken = localStorage.getItem('adminToken') || 
+                     localStorage.getItem('admintoken') || 
+                     localStorage.getItem('token'); 
     
-    if (!token || token === 'null' || token === 'undefined') {
+    if (!rawToken || rawToken === 'null' || rawToken === 'undefined') {
       return { 'Content-Type': 'application/json' };
     }
 
-    token = token.replace(/^"|"$/g, '');
-
+    const token = rawToken.replace(/^"|"$/g, '');
     return {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`
     };
   }, []);
 
-  // 🔄 Unified Sync Engine with Memory Cleanup & Optional Signal
+  // 🔄 Unified Sync Engine
   const fetchData = useCallback(async (signal = null) => {
     const headers = getAuthHeaders();
     if (!headers.Authorization) {
@@ -108,24 +119,23 @@ const AdminPaymentLedger = () => {
       return;
     }
 
-    const fetchOptions = signal ? { headers, signal } : { headers };
+    const fetchOptions = { headers, ...(signal && { signal }) };
 
     try {
-      const [ledgerRes, matrixRes] = await Promise.all([
+      const [ledgerRes, matrixRes] = await Promise.allSettled([
         fetch(`${API_BASE_URL}/api/payment/history`, fetchOptions),
         fetch(`${API_BASE_URL}/api/payment/fee-matrix`, fetchOptions)
       ]);
 
-      if (ledgerRes.ok) {
-        const ledgerOutput = await ledgerRes.json();
+      if (ledgerRes.status === 'fulfilled' && ledgerRes.value.ok) {
+        const ledgerOutput = await ledgerRes.value.json();
         if (ledgerOutput.success) {
-          const cleanLedger = ledgerOutput.data.filter(item => item.status !== 'pending');
-          setLedger(cleanLedger);
+          setLedger(ledgerOutput.data.filter(item => item.status !== 'pending'));
         }
       }
 
-      if (matrixRes.ok) {
-        const matrixOutput = await matrixRes.json();
+      if (matrixRes.status === 'fulfilled' && matrixRes.value.ok) {
+        const matrixOutput = await matrixRes.value.json();
         if (matrixOutput.success) {
           setFeeConfigs(matrixOutput.data);
         }
@@ -145,31 +155,14 @@ const AdminPaymentLedger = () => {
     return () => controller.abort();
   }, [fetchData]);
 
-  // 🧮 Paystack Net Settlement Logic (1.5% + ₦100, capped at ₦2,000)
-  const getPaystackNet = useCallback((grossAmount) => {
-    const amt = Number(grossAmount) || 0;
-    if (amt <= 0) return 0;
-
-    let fee = amt * 0.015;
-    if (amt >= 2500) {
-      fee += 100;
-    }
-    if (fee > 2000) {
-      fee = 2000;
-    }
-    
-    return Math.max(0, amt - fee);
-  }, []);
-
   // 📥 Filter Update Handler
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  // 📡 Update or Create Configuration Rule
+  // ⚙️ Update Fee Matrix Handler
   const handleUpdateFeeMatrix = async (e) => {
     e.preventDefault();
-    setFeedback({ type: '', message: '' });
 
     const numericAmount = Number(form.amount);
     if (!numericAmount || numericAmount <= 0) {
@@ -182,14 +175,15 @@ const AdminPaymentLedger = () => {
     }
 
     setIsUpdatingConfig(true);
-    const endpoint = `${API_BASE_URL}/api/payment/update-fee-matrix`;
 
     try {
-      const response = await fetch(endpoint, {
+      const response = await fetch(`${API_BASE_URL}/api/payment/update-fee-matrix`, {
         method: 'POST',
         headers, 
         body: JSON.stringify({
           narration: form.narration,
+          targetLevel: form.targetLevel,
+          academicYear: form.academicYear,
           amount: numericAmount
         })
       });
@@ -199,10 +193,9 @@ const AdminPaymentLedger = () => {
       if (response.ok && data.success !== false) {
         setFeedback({
           type: 'success',
-          message: `${form.narration} updated to ₦${numericAmount.toLocaleString()} successfully.`
+          message: `${form.narration} (${form.targetLevel}) updated to ₦${numericAmount.toLocaleString()} successfully.`
         });
-        
-        setForm({ narration: NARRATIONS[0], amount: '' });
+        setForm(prev => ({ ...prev, amount: '' }));
         fetchData();
       } else {
         throw new Error(data.message || 'Failed updating gateway matrix configuration.');
@@ -220,63 +213,72 @@ const AdminPaymentLedger = () => {
       const query = filters.search.toLowerCase();
       const safeName = (item.studentName || '').toLowerCase();
       const safeRef = (item.reference || '').toLowerCase();
-      const safeLevel = (item.targetLevel || '').toLowerCase();
-      const safeNarration = (item.narration || '').toLowerCase();
       
       const matchesSearch = safeName.includes(query) || safeRef.includes(query);
       const matchesStatus = filters.status === 'all' || item.status === filters.status;
-      const matchesNarration = filters.narration === 'all' || safeNarration === filters.narration.toLowerCase();
-      const matchesLevel = filters.level === 'all' || safeLevel === filters.level.toLowerCase();
+      const matchesNarration = filters.narration === 'all' || (item.narration || '').toLowerCase() === filters.narration.toLowerCase();
+      const matchesLevel = filters.level === 'all' || (item.targetLevel || '').toLowerCase() === filters.level.toLowerCase();
       const matchesSession = filters.session === 'all' || item.academicYear === filters.session;
       
       return matchesSearch && matchesStatus && matchesNarration && matchesLevel && matchesSession;
     });
   }, [ledger, filters]);
 
-  // 📊 Fast Memoized Stats Panel
+  // 📊 Financial Stats Engine (Base Revenue vs Paystack Fees vs Gross Charged)
   const stats = useMemo(() => {
     const successfulTxs = filteredLedger.filter(item => item.status === 'success');
-    const gross = successfulTxs.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
-    const net = successfulTxs.reduce((sum, item) => sum + getPaystackNet(item.amount), 0);
+
+    const netRevenue = successfulTxs.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const totalFees = successfulTxs.reduce((sum, item) => sum + (Number(item.paystackFee) || 0), 0);
+    const grossCollected = successfulTxs.reduce((sum, item) => sum + (Number(item.totalPaid) || Number(item.amount) || 0), 0);
 
     return {
-      totalGross: gross,
-      totalRealMoney: net,
+      netRevenue,
+      totalFees,
+      grossCollected,
       successCount: successfulTxs.length
     };
-  }, [filteredLedger, getPaystackNet]);
+  }, [filteredLedger]);
 
-  // 📥 Enterprise-Safe CSV Export (With BOM)
+  // 📥 Enterprise CSV Export
   const exportToCSV = () => {
     if (filteredLedger.length === 0) return;
-    const headers = ["Date", "Student Name", "Reference", "Narration", "Level", "Session", "Gross Amount (NGN)", "Real Money Net (NGN)", "Status"];
+    
+    const headers = [
+      "Date", "Student Name", "Reference", "Narration", 
+      "Level", "Session", "Department Net (NGN)", 
+      "Paystack Fee (NGN)", "Total Charged (NGN)", "Status"
+    ];
     
     const escapeCSV = (str) => `"${String(str || '').replace(/"/g, '""')}"`;
 
-    const csvContent = [
-      headers.join(","),
-      ...filteredLedger.map(row => {
-        const date = new Date(row.createdAt || row.paidAt).toLocaleDateString();
-        return [
-          escapeCSV(date),
-          escapeCSV(row.studentName),
-          escapeCSV(row.reference),
-          escapeCSV(row.narration),
-          escapeCSV(row.targetLevel),
-          escapeCSV(row.academicYear),
-          escapeCSV(row.amount),
-          escapeCSV(getPaystackNet(row.amount).toFixed(2)),
-          escapeCSV(row.status)
-        ].join(",");
-      })
-    ].join("\n");
+    const rows = filteredLedger.map(row => {
+      const baseAmount = Number(row.amount) || 0;
+      const fee = Number(row.paystackFee) || 0;
+      const totalPaid = Number(row.totalPaid) || baseAmount;
 
+      return [
+        escapeCSV(new Date(row.createdAt || row.paidAt).toLocaleDateString()),
+        escapeCSV(row.studentName),
+        escapeCSV(row.reference),
+        escapeCSV(row.narration),
+        escapeCSV(row.targetLevel),
+        escapeCSV(row.academicYear),
+        escapeCSV(baseAmount.toFixed(2)),
+        escapeCSV(fee.toFixed(2)),
+        escapeCSV(totalPaid.toFixed(2)),
+        escapeCSV(row.status)
+      ].join(",");
+    });
+
+    const csvContent = [headers.join(","), ...rows].join("\n");
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.download = `audit_ledger_${new Date().toISOString().split('T')[0]}.csv`;
     
-    link.setAttribute("href", url);
-    link.setAttribute("download", `payment_ledger_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -287,7 +289,9 @@ const AdminPaymentLedger = () => {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center text-white">
         <FaCircleNotch className="animate-spin text-[#d2b48c] mb-4" size={32} />
-        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#d2b48c] animate-pulse">Syncing Ledger Matrix...</span>
+        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-[#d2b48c] animate-pulse">
+          Syncing Ledger Matrix...
+        </span>
       </div>
     );
   }
@@ -301,9 +305,12 @@ const AdminPaymentLedger = () => {
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
               <h2 className="text-2xl font-serif text-[#d2b48c] tracking-wide uppercase flex items-center gap-3">
-                <FaHistory className="text-[#8b4513]" size={20} /> Payment  Ledger
+                <FaHistory className="text-[#8b4513]" size={20} aria-hidden="true" /> 
+                Payment & Fee Governance Ledger
               </h2>
-              <p className="text-gray-500 text-xs mt-1">Manage payment policies.</p>
+              <p className="text-gray-500 text-xs mt-1">
+                Real-time financial audits, rate configurations, and gateway charge settlements.
+              </p>
             </div>
           </div>
         </header>
@@ -312,22 +319,26 @@ const AdminPaymentLedger = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* RATE CONFIGURATION PANEL */}
-          <div className="bg-[#0a0a0a] border border-[#3d2b1f] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+          <section className="bg-[#0a0a0a] border border-[#3d2b1f] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
             <div>
-              <div className="flex justify-between items-center mb-4">
+              <header className="flex justify-between items-center mb-4">
                 <h3 className="text-xs font-black uppercase tracking-wider text-[#d2b48c] flex items-center gap-2">
-                  <FaSlidersH className="text-[#8b4513]" size={12} /> Fee Matrix Registry
+                  <FaSlidersH className="text-[#8b4513]" size={12} aria-hidden="true" /> 
+                  Fee Matrix Registry
                 </h3>
-              </div>
+              </header>
               
-              <form onSubmit={handleUpdateFeeMatrix} className="space-y-4">
+              <form onSubmit={handleUpdateFeeMatrix} className="space-y-3">
                 <div>
-                  <label className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">Target Account Narration</label>
+                  <label htmlFor="narration" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
+                    Target Account Narration
+                  </label>
                   <select 
+                    id="narration"
                     value={form.narration}
                     disabled={isUpdatingConfig}
                     onChange={(e) => setForm(prev => ({ ...prev, narration: e.target.value }))}
-                    className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2.5 text-gray-300 focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/25"
+                    className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:border-[#8b4513] focus-visible:ring-1 focus-visible:ring-[#8b4513]/25 disabled:opacity-50"
                   >
                     {NARRATIONS.map(narr => (
                       <option key={narr} value={narr}>{narr}</option>
@@ -335,18 +346,58 @@ const AdminPaymentLedger = () => {
                   </select>
                 </div>
 
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label htmlFor="targetLevel" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
+                      Academic Level
+                    </label>
+                    <select 
+                      id="targetLevel"
+                      value={form.targetLevel}
+                      disabled={isUpdatingConfig}
+                      onChange={(e) => setForm(prev => ({ ...prev, targetLevel: e.target.value }))}
+                      className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:border-[#8b4513] disabled:opacity-50"
+                    >
+                      {ACADEMIC_LEVELS.map(lvl => (
+                        <option key={lvl} value={lvl}>{lvl}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="academicYear" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
+                      Session
+                    </label>
+                    <select 
+                      id="academicYear"
+                      value={form.academicYear}
+                      disabled={isUpdatingConfig}
+                      onChange={(e) => setForm(prev => ({ ...prev, academicYear: e.target.value }))}
+                      className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:border-[#8b4513] disabled:opacity-50"
+                    >
+                      {ACADEMIC_SESSIONS.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
                 <div>
-                  <label className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">Enforced Value Amount (₦)</label>
+                  <label htmlFor="amount" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
+                    Base Department Fee (₦)
+                  </label>
                   <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-gray-500">₦</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-gray-500" aria-hidden="true">₦</span>
                     <input 
+                      id="amount"
                       type="number" 
                       required
+                      min="1"
                       value={form.amount}
                       disabled={isUpdatingConfig}
-                      placeholder="e.g. 5000"
+                      placeholder="e.g. 100"
                       onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
-                      className="w-full bg-[#111111] border border-[#2a1b12] font-mono text-xs rounded-lg pl-7 pr-3 py-2.5 text-white focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/25"
+                      className="w-full bg-[#111111] border border-[#2a1b12] font-mono text-xs rounded-lg pl-7 pr-3 py-2 text-white focus:outline-none focus:border-[#8b4513] disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -354,49 +405,50 @@ const AdminPaymentLedger = () => {
                 <button 
                   type="submit" 
                   disabled={isUpdatingConfig}
-                  className="w-full bg-[#8b4513] hover:bg-[#a0522d] disabled:bg-[#3d2b1f] text-white py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md"
+                  className="w-full bg-[#8b4513] hover:bg-[#a0522d] disabled:bg-[#3d2b1f] disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md focus:outline-none"
                 >
                   {isUpdatingConfig ? (
-                    <><FaCircleNotch className="animate-spin" size={10} /> Broadcasting...</>
+                    <><FaCircleNotch className="animate-spin" size={10} /> Updating Rate Matrix...</>
                   ) : (
-                    <><FaSave size={10} /> Deploy </>
+                    <><FaSave size={10} /> Save Fee Configuration</>
                   )}
                 </button>
               </form>
 
               {feedback.message && (
-                <div className={`mt-3 p-3 rounded-lg text-[10px] tracking-wide border flex items-start gap-2 animate-fadeIn ${
+                <div role="alert" className={`mt-3 p-3 rounded-lg text-[10px] tracking-wide border flex items-start gap-2 ${
                   feedback.type === 'success' 
                     ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400' 
                     : 'bg-rose-950/20 border-rose-900/40 text-rose-400'
                 }`}>
                   {feedback.type === 'success' ? (
-                    <FaCheckCircle size={12} className="shrink-0 mt-0.5" />
+                    <FaCheckCircle size={12} className="shrink-0 mt-0.5" aria-hidden="true" />
                   ) : (
-                    <FaExclamationTriangle size={12} className="shrink-0 mt-0.5" />
+                    <FaExclamationTriangle size={12} className="shrink-0 mt-0.5" aria-hidden="true" />
                   )}
                   <span>{feedback.message}</span>
                 </div>
               )}
             </div>
 
-            {/* READ-ONLY REGISTRY SUMMARY LIST */}
-            <div className="mt-6 border-t border-[#2a1b12] pt-4">
-              <p className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-3">
-                Active Matrix Rates
-              </p>
-              <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1 custom-scrollbar">
+            {/* READ-ONLY MATRIX REGISTRY SUMMARY */}
+            <div className="mt-4 border-t border-[#2a1b12] pt-3">
+              <h4 className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-2">
+                Active Configured Rates
+              </h4>
+              <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
                 {feeConfigs.length === 0 ? (
                   <p className="text-gray-600 text-[10px] italic">No active rates configured.</p>
                 ) : (
                   feeConfigs.map((config) => (
                     <div 
-                      key={config._id || config.narration} 
-                      className="flex justify-between items-center bg-[#111111] border border-[#1a110b] px-3 py-2 rounded-lg text-xs"
+                      key={config._id || `${config.narration}-${config.targetLevel}`} 
+                      className="flex justify-between items-center bg-[#111111] border border-[#1a110b] px-2.5 py-1.5 rounded-lg text-xs"
                     >
-                      <span className="text-gray-300 font-medium truncate pr-2">
-                        {config.narration}
-                      </span>
+                      <div className="truncate pr-2">
+                        <p className="text-gray-300 font-medium truncate">{config.narration}</p>
+                        <p className="text-[8px] text-gray-500 font-mono">{config.targetLevel} | {config.academicYear}</p>
+                      </div>
                       <span className="font-mono font-bold text-[#d2b48c] shrink-0">
                         ₦{Number(config.amount).toLocaleString()}
                       </span>
@@ -405,40 +457,46 @@ const AdminPaymentLedger = () => {
                 )}
               </div>
             </div>
-
-          </div>
+          </section>
 
           {/* DYNAMIC METRICS BOARDS */}
-          <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 h-fit">
+          <section className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 h-fit">
             <MetricCard 
-              title="Real Money (Net Settled)"
-              value={`₦${stats.totalRealMoney.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-              subtext={`${stats.successCount} Audited Clearances`}
+              title="Department Net Revenue"
+              value={`₦${stats.netRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              subtext={`${stats.successCount} Stored Base Payments`}
               icon={FaWallet}
               variant="primary"
             />
             <MetricCard 
-              title="Gross Capital Tracked"
-              value={`₦${stats.totalGross.toLocaleString()}`}
-              subtext="Accumulated Fees (Includes Gateway Charges)"
+              title="Gateway Fees Paid"
+              value={`₦${stats.totalFees.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              subtext="Paystack Charges Absorbed/Passed"
+              icon={FaReceipt}
+              variant="info"
+            />
+            <MetricCard 
+              title="Gross Capital Collected"
+              value={`₦${stats.grossCollected.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              subtext="Total Student Outflow"
               icon={FaWallet}
               variant="secondary"
             />
-          </div>
-
+          </section>
         </div>
 
         {/* COMPREHENSIVE QUERY & ACTION BAR */}
-        <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-[#0a0a0a] p-4 rounded-xl border border-[#1a110b]">
+        <section className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 bg-[#0a0a0a] p-4 rounded-xl border border-[#1a110b]">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 flex-1">
-            
             <div className="relative w-full">
-              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={12} />
+              <label htmlFor="search-ledger" className="sr-only">Search Student or Ref</label>
+              <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={12} aria-hidden="true" />
               <input 
+                id="search-ledger"
                 type="text" 
                 placeholder="Search Student or Ref..." 
                 value={filters.search}
-                className="w-full bg-[#111111] border border-[#2a1b12] rounded-lg pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/25 transition-colors"
+                className="w-full bg-[#111111] border border-[#2a1b12] rounded-lg pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-[#8b4513] transition-colors"
                 onChange={e => handleFilterChange('search', e.target.value)}
               />
             </div>
@@ -448,110 +506,122 @@ const AdminPaymentLedger = () => {
               onChange={e => handleFilterChange('status', e.target.value)}
               options={['success', 'failed']}
               defaultLabel="All Statuses"
+              ariaLabel="Filter by status"
             />
-
             <FilterSelect 
               icon={FaTag}
               value={filters.narration}
               onChange={e => handleFilterChange('narration', e.target.value)}
               options={NARRATIONS}
               defaultLabel="All Narrations"
+              ariaLabel="Filter by narration"
             />
-
             <FilterSelect 
               icon={FaGraduationCap}
               value={filters.level}
               onChange={e => handleFilterChange('level', e.target.value)}
               options={ACADEMIC_LEVELS}
               defaultLabel="All Academic Levels"
+              ariaLabel="Filter by academic level"
             />
-
             <FilterSelect 
               icon={FaCalendarAlt}
               value={filters.session}
               onChange={e => handleFilterChange('session', e.target.value)}
               options={ACADEMIC_SESSIONS}
               defaultLabel="All Sessions"
+              ariaLabel="Filter by session"
             />
-
           </div>
 
           <button 
             onClick={exportToCSV}
             disabled={filteredLedger.length === 0}
-            className="flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#1a110b] disabled:opacity-40 disabled:pointer-events-none border border-[#2a1b12] hover:border-[#8b4513] text-[#d2b48c] px-5 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap self-stretch xl:self-auto shrink-0"
+            className="flex items-center justify-center gap-2 bg-[#111111] hover:bg-[#1a110b] disabled:opacity-40 disabled:cursor-not-allowed border border-[#2a1b12] hover:border-[#8b4513] text-[#d2b48c] px-5 py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap self-stretch xl:self-auto shrink-0 focus:outline-none"
           >
-            <FaDownload size={12} /> Export CSV Audit
+            <FaDownload size={12} aria-hidden="true" /> Export Audit CSV
           </button>
-        </div>
+        </section>
 
         {/* CENTRALIZED DATABASE VIEWPORTS */}
-        <div className="bg-[#0a0a0a] border border-[#2a1b12] rounded-xl overflow-hidden shadow-2xl">
+        <section className="bg-[#0a0a0a] border border-[#2a1b12] rounded-xl overflow-hidden shadow-2xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#2a1b12] bg-[#111111] text-[10px] uppercase tracking-widest text-gray-500 font-bold">
-                  <th className="p-4 whitespace-nowrap">Student Identity</th>
-                  <th className="p-4 whitespace-nowrap">Reference ID</th>
-                  <th className="p-4 whitespace-nowrap">Narration Purpose</th>
-                  <th className="p-4 whitespace-nowrap">Academic Scope</th>
-                  <th className="p-4 whitespace-nowrap">Gross Paid (₦)</th>
-                  <th className="p-4 whitespace-nowrap text-emerald-400">Real Net (₦)</th>
-                  <th className="p-4 text-center whitespace-nowrap">Gate Status</th>
+                  <th scope="col" className="p-4 whitespace-nowrap">Student Identity</th>
+                  <th scope="col" className="p-4 whitespace-nowrap">Reference ID</th>
+                  <th scope="col" className="p-4 whitespace-nowrap">Narration Purpose</th>
+                  <th scope="col" className="p-4 whitespace-nowrap">Academic Scope</th>
+                  <th scope="col" className="p-4 whitespace-nowrap text-emerald-400">Department Base (₦)</th>
+                  <th scope="col" className="p-4 whitespace-nowrap text-blue-400">Gateway Fee (₦)</th>
+                  <th scope="col" className="p-4 whitespace-nowrap text-amber-400">Total Charged (₦)</th>
+                  <th scope="col" className="p-4 text-center whitespace-nowrap">Gate Status</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-[#1a110b]">
                 {filteredLedger.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="p-16 text-center text-gray-600 uppercase tracking-widest text-[10px] font-bold">
+                    <td colSpan="8" className="p-16 text-center text-gray-600 uppercase tracking-widest text-[10px] font-bold">
                       No matching financial records discovered in the matrix.
                     </td>
                   </tr>
                 ) : (
-                  filteredLedger.map((row) => (
-                    <tr key={row._id || row.reference} className="hover:bg-[#111111] transition-colors group">
-                      <td className="p-4">
-                        <p className="font-sans font-bold text-gray-200 group-hover:text-[#d2b48c] transition-colors">{row.studentName}</p>
-                        <p className="text-[9px] text-gray-600 mt-0.5 font-mono">
-                          {new Date(row.createdAt || row.paidAt).toLocaleString()}
-                        </p>
-                      </td>
-                      <td className="p-4 text-gray-500 font-mono text-[10px] tracking-wider">{row.reference}</td>
-                      <td className="p-4">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider bg-[#1a110b] text-[#d2b48c] border border-[#3d2b1f]">
-                          <FaTag size={8} className="text-[#8b4513]" />
-                          {row.narration}
-                        </span>
-                      </td>
-                      <td className="p-4 text-gray-400 text-[11px]">
-                        <span className="font-bold text-gray-300">{row.targetLevel || 'N/A'}</span> 
-                        <span className="opacity-30 mx-2">|</span> 
-                        {row.academicYear || 'N/A'}
-                      </td>
-                      <td className="p-4 font-mono font-bold text-gray-400 tracking-wide">
-                        {Number(row.amount).toLocaleString()}
-                      </td>
-                      <td className="p-4 font-mono font-bold text-emerald-400 tracking-wide bg-emerald-950/5">
-                        {getPaystackNet(row.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="p-4 text-center">
-                        {row.status === 'success' ? (
-                          <span className="inline-flex items-center gap-1.5 bg-emerald-950/20 border border-emerald-900/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-emerald-500 shadow-inner">
-                            <FaCheckCircle size={10} /> Success
+                  filteredLedger.map((row) => {
+                    const baseAmount = Number(row.amount) || 0;
+                    const fee = Number(row.paystackFee) || 0;
+                    const totalPaid = Number(row.totalPaid) || baseAmount;
+
+                    return (
+                      <tr key={row._id || row.reference} className="hover:bg-[#111111] transition-colors group">
+                        <td className="p-4">
+                          <p className="font-sans font-bold text-gray-200 group-hover:text-[#d2b48c] transition-colors">
+                            {row.studentName}
+                          </p>
+                          <p className="text-[9px] text-gray-600 mt-0.5 font-mono">
+                            {new Date(row.createdAt || row.paidAt).toLocaleString()}
+                          </p>
+                        </td>
+                        <td className="p-4 text-gray-500 font-mono text-[10px] tracking-wider">{row.reference}</td>
+                        <td className="p-4">
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-black uppercase tracking-wider bg-[#1a110b] text-[#d2b48c] border border-[#3d2b1f]">
+                            <FaTag size={8} className="text-[#8b4513]" aria-hidden="true" />
+                            {row.narration}
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 bg-rose-950/20 border border-rose-900/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-rose-500 shadow-inner">
-                            <FaExclamationTriangle size={10} /> Failed
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+                        <td className="p-4 text-gray-400 text-[11px]">
+                          <span className="font-bold text-gray-300">{row.targetLevel || 'N/A'}</span> 
+                          <span className="opacity-30 mx-2" aria-hidden="true">|</span> 
+                          {row.academicYear || 'N/A'}
+                        </td>
+                        <td className="p-4 font-mono font-bold text-emerald-400 tracking-wide bg-emerald-950/5">
+                          ₦{baseAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-4 font-mono font-bold text-blue-400 tracking-wide">
+                          ₦{fee.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-4 font-mono font-bold text-amber-400 tracking-wide">
+                          ₦{totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="p-4 text-center">
+                          {row.status === 'success' ? (
+                            <span className="inline-flex items-center gap-1.5 bg-emerald-950/20 border border-emerald-900/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-emerald-500 shadow-inner">
+                              <FaCheckCircle size={10} aria-hidden="true" /> Success
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 bg-rose-950/20 border border-rose-900/30 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest text-rose-500 shadow-inner">
+                              <FaExclamationTriangle size={10} aria-hidden="true" /> Failed
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
 
       </div>
     </div>

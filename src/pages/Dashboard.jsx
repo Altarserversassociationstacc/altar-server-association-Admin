@@ -140,8 +140,8 @@ const Dashboard = () => {
       case 'paymentLedger': return { title: 'Financial Ledger ', desc: 'Audit live transaction gateway logs' };
       case 'accountManager': return { title: 'Security', desc: 'Manage access levels' };
       case 'registeredMembers': return { title: 'Members ', desc: 'Review verified profile forms and records tracking' };
-      case 'levelManager': return { title: 'Level Manager', desc: 'Manage Level rosters ' }; // <-- 4. ADDED LEVEL MANAGER HEADER META
-      default: return { title: 'Galllery Panel', desc: 'Manage association content ' };
+      case 'levelManager': return { title: 'Level Manager', desc: 'Manage Level rosters ' }; 
+      default: return { title: '', desc: ' ' };
     }
   })();
 

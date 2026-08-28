@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { FaImages, FaHeading, FaTag, FaUpload } from 'react-icons/fa';
+import { FaImages, FaHeading, FaUpload } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
+
+// Grab the environment variable and strip any accidental trailing slashes
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 export const AdminGalleryForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -31,7 +34,8 @@ export const AdminGalleryForm = ({ onSuccess }) => {
       data.append('title', formData.title);
       data.append('image', imageFile);
 
-      await axios.post('http://localhost:5001/api/gallery', data, {
+      // Using the dynamic API_BASE_URL instead of the hardcoded localhost
+      await axios.post(`${API_BASE_URL}/api/gallery`, data, {
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -52,13 +56,13 @@ export const AdminGalleryForm = ({ onSuccess }) => {
 
   return (
     <div className="bg-[#111111] border border-[#2a1b12] rounded-3xl p-6 shadow-2xl">
-      <header className="mb-6 text-center">
+      <div className="mb-6 text-center">
         <div className="w-12 h-12 bg-[#8b4513]/10 border border-[#8b4513]/30 rounded-full flex items-center justify-center mx-auto mb-3">
           <FaImages className="text-[#8b4513] text-xl" />
         </div>
-        <h2 className="text-2xl font-serif text-[#d2b48c] mb-1 tracking-tight">Gallery Archives</h2>
+        <h2 className="text-2xl font-serif text-[#d2b48c] mb-1 tracking-tight">Gallery</h2>
         <p className="text-gray-500 text-[9px] uppercase tracking-widest font-bold">Documenting our Sacred Service</p>
-      </header>
+      </div>
 
       {error && (
         <div className="mb-6 p-3 bg-red-900/20 border border-red-900/50 text-red-500 text-[9px] font-bold uppercase tracking-widest rounded-xl text-center">

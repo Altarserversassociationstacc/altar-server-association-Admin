@@ -10,7 +10,7 @@ import {
 const ACADEMIC_LEVELS = ['ALL', '100L', '200L', '300L', '400L', '500L'];
 const ACADEMIC_YEARS = ['2026/2027', '2025/2026', '2024/2025', '2023/2024', '2005/2006'];
 const SESSIONS = ['Harmattan', 'Rain'];
-const ACTIVITIES = ['Meeting', 'Practice', 'Cloth Washing'];
+const ACTIVITIES = ['Meeting', 'Practice', 'Saturday Work'];
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const checkDuesStatus = (student, currentLevel, currentYear) => {
@@ -495,11 +495,6 @@ const AdminMeetingManager = () => {
 
         {/* REGISTRY INITIALIZATION FORM */}
         <div className="bg-[#0a0a0a] border border-[#3d2b1f] rounded-2xl p-6 md:p-8 shadow-2xl max-w-2xl mx-auto">
-          <div className="border-b border-[#2a1b12] pb-4 mb-6">
-            <h3 className="text-sm font-black uppercase tracking-wider text-[#d2b48c] flex items-center gap-2.5">
-              <FaCalendarAlt className="text-[#8b4513]" size={14} /> Step 1: Initialize Meeting Register
-            </h3>
-          </div>
           <form onSubmit={handleCreateRecord} className="space-y-5">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
