@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { FaEnvelope, FaLock, FaArrowRight } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaEnvelope, FaLock, FaArrowRight, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 import axios from 'axios';
-
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const AdminLogin = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const handleSubmit = async (e) => {
@@ -27,78 +31,116 @@ const AdminLogin = () => {
       password: formData.password,
     };
 
-    // Staging logs automatically suppressed in production logs workflows
-    if (import.meta.env.DEV) {
-      console.log("⚡ [LOGIN DIAGNOSTIC]: Form submitted. Payload prepared:", sanitizedPayload);
-    }
-
     try {
-      // ✅ Production Secure: Dynamically targets local or live servers via API URL configs
-      // Because of the regex above, this will perfectly resolve to /api/admin/login without double slashes!
       const response = await axios.post(`${API_BASE_URL}/api/admin/login`, sanitizedPayload);
-      
+
       if (response.data.success) {
+        // Backend returns the admin details inside response.data.data
+        const adminData = response.data.data;
+
         localStorage.setItem('adminToken', response.data.token);
-        localStorage.setItem('adminUser', JSON.stringify(response.data.admin));
-        navigate('/admin/dashboard'); 
+        localStorage.setItem('adminUser', JSON.stringify(adminData));
+
+        if (adminData?.mustChangePassword) {
+          navigate('/admin/change-credentials');
+        } else {
+          navigate('/admin/dashboard');
+        }
       }
     } catch (err) {
-      // Gracefully captures backend system validations without breaking UI layout structures
+      console.error("❌ [LOGIN ERROR]:", err.response?.data || err.message);
       setError(err.response?.data?.message || 'Authentication failed. Please verify credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  const renderInputField = (name, type, placeholder, Icon) => (
-    <div className="relative mb-5 group">
-      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-blue-400 transition-colors">
-        <Icon size={16} />
-      </div>
-      <input
-        type={type}
-        name={name}
-        value={formData[name]}
-        onChange={handleChange}
-        required
-        placeholder={placeholder}
-        className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block pl-10 p-3.5 placeholder-gray-400 transition-all outline-none"
-      />
-    </div>
-  );
-
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-white/5">
+    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 font-sans">
+      <div className="max-w-md w-full bg-[#110c08] rounded-2xl overflow-hidden border border-[#2a2015] shadow-2xl pb-8">
         
-        <div className="p-8 text-center border-b border-gray-700 bg-gray-700/30">
-          <h2 className="text-2xl font-bold tracking-tight text-blue-400 uppercase">Admin Login</h2>
-          <p className="text-gray-400 text-xs mt-2 font-medium">Authenticate administrative session credentials</p>
+        {/* Header Section */}
+        <div className="p-8 pb-4 text-center">
+          <h2 className="text-3xl font-serif font-bold tracking-tight text-white mb-2">Login</h2>
+          <p className="text-[#c19a6b] text-[10px] font-bold tracking-[0.2em] uppercase">
+            Welcome Back, Administrator
+          </p>
         </div>
 
-        <div className="p-8">
+        {/* Form Section */}
+        <div className="px-8 pt-4">
           {error && (
-            <div className="mb-6 p-3.5 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-lg text-center font-semibold tracking-wide">
+            <div className="mb-6 p-3.5 bg-red-900/30 border border-red-800 text-red-200 text-xs rounded-lg text-center font-semibold tracking-wide">
               {error}
             </div>
           )}
           
-          <form onSubmit={handleSubmit} className="space-y-1">
-            {renderInputField('email', 'email', 'Email Address', FaEnvelope)}
-            {renderInputField('password', 'password', 'Password', FaLock)}
+          <form onSubmit={handleSubmit} className="space-y-5 border-b border-[#2a2015] pb-8">
+            
+            {/* Email Field */}
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#c19a6b]">
+                <FaEnvelope size={16} />
+              </div>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                autoComplete="off"
+                placeholder="Email Address"
+                className="w-full bg-[#eff4fa] text-gray-900 font-medium text-sm rounded-xl block pl-11 p-4 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#7c4327]"
+              />
+            </div>
 
+            {/* Password Field */}
+            <div className="relative group">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-[#c19a6b]">
+                <FaLock size={16} />
+              </div>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                autoComplete="new-password"
+                placeholder="Password"
+                className="w-full bg-[#eff4fa] text-gray-900 font-medium text-sm rounded-xl block pl-11 pr-12 p-4 placeholder-gray-500 outline-none focus:ring-2 focus:ring-[#7c4327]"
+              />
+              <button
+                type="button"
+                onClick={togglePasswordVisibility}
+                className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#c19a6b] hover:text-[#9a764d] transition-colors cursor-pointer"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+              </button>
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex justify-end pt-1">
+              <button type="button" className="text-[#8c94a3] hover:text-white text-xs font-medium transition-colors">
+                Forgot Password?
+              </button>
+            </div>
+
+            {/* Submit Button */}
             <button 
               type="submit" 
               disabled={loading} 
-              className="w-full mt-6 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase tracking-wider py-3.5 px-4 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20"
+              className="w-full mt-2 bg-[#7c4327] hover:bg-[#63341e] text-white text-xs font-bold uppercase tracking-widest py-4 px-4 rounded-xl transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer shadow-lg"
             >
-              {loading ? <PulseLoader color="#ffffff" size={6} margin={2} /> : <>Secure Sign In <FaArrowRight size={10} /></>}
+              {loading ? <PulseLoader color="#ffffff" size={6} margin={2} /> : <>LOGIN <FaArrowRight size={12} /></>}
             </button>
           </form>
 
-          <div className="mt-8 text-center text-gray-400 text-xs font-medium tracking-wide">
-            Don't have an admin account?{' '}
-            <Link to="/admin/signup" className="text-blue-400 hover:text-blue-300 font-bold hover:underline ml-1">Sign Up</Link>
+          {/* Footer Area */}
+          <div className="mt-6 text-center">
+            <p className="text-[#8c94a3] text-[11px] font-medium tracking-wide">
+              Secure Administrative Node
+            </p>
           </div>
         </div>
 

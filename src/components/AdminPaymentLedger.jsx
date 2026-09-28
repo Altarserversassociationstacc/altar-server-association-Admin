@@ -5,9 +5,6 @@ import {
   FaSlidersH, FaSave, FaGraduationCap, FaCalendarAlt, FaReceipt
 } from 'react-icons/fa';
 
-// ==========================================
-// 📌 STANDARDIZED CONSTANTS
-// ==========================================
 const ACADEMIC_SESSIONS = ['2025/2026', '2026/2027', '2027/2028', '2028/2029', '2029/2030'];
 const ACADEMIC_LEVELS = ['100L', '200L', '300L', '400L', '500L', '600L'];
 const NARRATIONS = [
@@ -19,10 +16,6 @@ const NARRATIONS = [
 
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
-// ==========================================
-// 💡 MODULAR SUB-COMPONENTS
-// ==========================================
-
 const MetricCard = ({ title, value, subtext, icon: Icon, variant = 'primary' }) => {
   const variantStyles = {
     primary: 'bg-emerald-950/30 text-emerald-500 border-emerald-900/20 text-emerald-400',
@@ -33,7 +26,7 @@ const MetricCard = ({ title, value, subtext, icon: Icon, variant = 'primary' }) 
   const currentStyle = variantStyles[variant] || variantStyles.primary;
 
   return (
-    <div className="bg-[#0a0a0a] border border-[#1a110b] px-6 py-5 rounded-2xl flex items-center gap-5 shadow-lg transition-all duration-300 hover:border-[#3d2b1f]">
+    <div className="bg-[#0a0a0a] border border-[#1a110b] px-6 py-5 rounded-2xl flex items-center gap-5 shadow-lg transition-all duration-300 hover:border-[#3d2b1f] w-full">
       <div className={`p-3 rounded-xl ${currentStyle.split(' ')[0]} ${currentStyle.split(' ')[1]}`}>
         <Icon size={20} aria-hidden="true" />
       </div>
@@ -66,10 +59,6 @@ const FilterSelect = ({ icon: Icon, value, onChange, options, defaultLabel, aria
   </div>
 );
 
-// ==========================================
-// 🚀 MAIN LEDGER COMPONENT
-// ==========================================
-
 const AdminPaymentLedger = () => {
   const [ledger, setLedger] = useState([]);
   const [feeConfigs, setFeeConfigs] = useState([]);
@@ -85,15 +74,13 @@ const AdminPaymentLedger = () => {
 
   const [form, setForm] = useState({
     narration: NARRATIONS[0],
-    targetLevel: '100L',
-    academicYear: '2026/2027',
+    academicYear: ACADEMIC_SESSIONS[0],
     amount: ''
   });
   
   const [isUpdatingConfig, setIsUpdatingConfig] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
 
-  // 🛡️ Normalized Auth Token Retrieval
   const getAuthHeaders = useCallback(() => {
     const rawToken = localStorage.getItem('adminToken') || 
                      localStorage.getItem('admintoken') || 
@@ -110,7 +97,6 @@ const AdminPaymentLedger = () => {
     };
   }, []);
 
-  // 🔄 Unified Sync Engine
   const fetchData = useCallback(async (signal = null) => {
     const headers = getAuthHeaders();
     if (!headers.Authorization) {
@@ -155,12 +141,10 @@ const AdminPaymentLedger = () => {
     return () => controller.abort();
   }, [fetchData]);
 
-  // 📥 Filter Update Handler
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
-  // ⚙️ Update Fee Matrix Handler
   const handleUpdateFeeMatrix = async (e) => {
     e.preventDefault();
 
@@ -182,7 +166,6 @@ const AdminPaymentLedger = () => {
         headers, 
         body: JSON.stringify({
           narration: form.narration,
-          targetLevel: form.targetLevel,
           academicYear: form.academicYear,
           amount: numericAmount
         })
@@ -193,7 +176,7 @@ const AdminPaymentLedger = () => {
       if (response.ok && data.success !== false) {
         setFeedback({
           type: 'success',
-          message: `${form.narration} (${form.targetLevel}) updated to ₦${numericAmount.toLocaleString()} successfully.`
+          message: `${form.narration} (${form.academicYear}) updated to ₦${numericAmount.toLocaleString()} successfully.`
         });
         setForm(prev => ({ ...prev, amount: '' }));
         fetchData();
@@ -207,7 +190,6 @@ const AdminPaymentLedger = () => {
     }
   };
 
-  // 🔍 Multi-Layer Memory Filter Engine
   const filteredLedger = useMemo(() => {
     return ledger.filter(item => {
       const query = filters.search.toLowerCase();
@@ -224,7 +206,6 @@ const AdminPaymentLedger = () => {
     });
   }, [ledger, filters]);
 
-  // 📊 Financial Stats Engine (Base Revenue vs Paystack Fees vs Gross Charged)
   const stats = useMemo(() => {
     const successfulTxs = filteredLedger.filter(item => item.status === 'success');
 
@@ -240,7 +221,6 @@ const AdminPaymentLedger = () => {
     };
   }, [filteredLedger]);
 
-  // 📥 Enterprise CSV Export
   const exportToCSV = () => {
     if (filteredLedger.length === 0) return;
     
@@ -299,168 +279,8 @@ const AdminPaymentLedger = () => {
   return (
     <div className="bg-[#050505] text-gray-100 font-sans min-h-screen w-full p-4 md:p-6 transition-all">
       <div className="max-w-7xl mx-auto space-y-6">
-        
-        {/* HEADER ZONE */}
-        <header className="border-b border-[#2a1b12] pb-6">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-              <h2 className="text-2xl font-serif text-[#d2b48c] tracking-wide uppercase flex items-center gap-3">
-                <FaHistory className="text-[#8b4513]" size={20} aria-hidden="true" /> 
-                Payment & Fee Governance Ledger
-              </h2>
-              <p className="text-gray-500 text-xs mt-1">
-                Real-time financial audits, rate configurations, and gateway charge settlements.
-              </p>
-            </div>
-          </div>
-        </header>
-
-        {/* METRICS & CONFIGURATION WRAPPER */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* RATE CONFIGURATION PANEL */}
-          <section className="bg-[#0a0a0a] border border-[#3d2b1f] rounded-2xl p-5 shadow-xl flex flex-col justify-between">
-            <div>
-              <header className="flex justify-between items-center mb-4">
-                <h3 className="text-xs font-black uppercase tracking-wider text-[#d2b48c] flex items-center gap-2">
-                  <FaSlidersH className="text-[#8b4513]" size={12} aria-hidden="true" /> 
-                  Fee Matrix Registry
-                </h3>
-              </header>
-              
-              <form onSubmit={handleUpdateFeeMatrix} className="space-y-3">
-                <div>
-                  <label htmlFor="narration" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
-                    Target Account Narration
-                  </label>
-                  <select 
-                    id="narration"
-                    value={form.narration}
-                    disabled={isUpdatingConfig}
-                    onChange={(e) => setForm(prev => ({ ...prev, narration: e.target.value }))}
-                    className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:border-[#8b4513] focus-visible:ring-1 focus-visible:ring-[#8b4513]/25 disabled:opacity-50"
-                  >
-                    {NARRATIONS.map(narr => (
-                      <option key={narr} value={narr}>{narr}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label htmlFor="targetLevel" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
-                      Academic Level
-                    </label>
-                    <select 
-                      id="targetLevel"
-                      value={form.targetLevel}
-                      disabled={isUpdatingConfig}
-                      onChange={(e) => setForm(prev => ({ ...prev, targetLevel: e.target.value }))}
-                      className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:border-[#8b4513] disabled:opacity-50"
-                    >
-                      {ACADEMIC_LEVELS.map(lvl => (
-                        <option key={lvl} value={lvl}>{lvl}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label htmlFor="academicYear" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
-                      Session
-                    </label>
-                    <select 
-                      id="academicYear"
-                      value={form.academicYear}
-                      disabled={isUpdatingConfig}
-                      onChange={(e) => setForm(prev => ({ ...prev, academicYear: e.target.value }))}
-                      className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3 py-2 text-gray-300 focus:outline-none focus:border-[#8b4513] disabled:opacity-50"
-                    >
-                      {ACADEMIC_SESSIONS.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="amount" className="text-[9px] uppercase tracking-widest font-bold text-gray-500 block mb-1">
-                    Base Department Fee (₦)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs text-gray-500" aria-hidden="true">₦</span>
-                    <input 
-                      id="amount"
-                      type="number" 
-                      required
-                      min="1"
-                      value={form.amount}
-                      disabled={isUpdatingConfig}
-                      placeholder="e.g. 100"
-                      onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
-                      className="w-full bg-[#111111] border border-[#2a1b12] font-mono text-xs rounded-lg pl-7 pr-3 py-2 text-white focus:outline-none focus:border-[#8b4513] disabled:opacity-50"
-                    />
-                  </div>
-                </div>
-
-                <button 
-                  type="submit" 
-                  disabled={isUpdatingConfig}
-                  className="w-full bg-[#8b4513] hover:bg-[#a0522d] disabled:bg-[#3d2b1f] disabled:cursor-not-allowed text-white py-2.5 rounded-lg text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md focus:outline-none"
-                >
-                  {isUpdatingConfig ? (
-                    <><FaCircleNotch className="animate-spin" size={10} /> Updating Rate Matrix...</>
-                  ) : (
-                    <><FaSave size={10} /> Save Fee Configuration</>
-                  )}
-                </button>
-              </form>
-
-              {feedback.message && (
-                <div role="alert" className={`mt-3 p-3 rounded-lg text-[10px] tracking-wide border flex items-start gap-2 ${
-                  feedback.type === 'success' 
-                    ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400' 
-                    : 'bg-rose-950/20 border-rose-900/40 text-rose-400'
-                }`}>
-                  {feedback.type === 'success' ? (
-                    <FaCheckCircle size={12} className="shrink-0 mt-0.5" aria-hidden="true" />
-                  ) : (
-                    <FaExclamationTriangle size={12} className="shrink-0 mt-0.5" aria-hidden="true" />
-                  )}
-                  <span>{feedback.message}</span>
-                </div>
-              )}
-            </div>
-
-            {/* READ-ONLY MATRIX REGISTRY SUMMARY */}
-            <div className="mt-4 border-t border-[#2a1b12] pt-3">
-              <h4 className="text-[9px] font-bold uppercase tracking-widest text-gray-500 mb-2">
-                Active Configured Rates
-              </h4>
-              <div className="space-y-1.5 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
-                {feeConfigs.length === 0 ? (
-                  <p className="text-gray-600 text-[10px] italic">No active rates configured.</p>
-                ) : (
-                  feeConfigs.map((config) => (
-                    <div 
-                      key={config._id || `${config.narration}-${config.targetLevel}`} 
-                      className="flex justify-between items-center bg-[#111111] border border-[#1a110b] px-2.5 py-1.5 rounded-lg text-xs"
-                    >
-                      <div className="truncate pr-2">
-                        <p className="text-gray-300 font-medium truncate">{config.narration}</p>
-                        <p className="text-[8px] text-gray-500 font-mono">{config.targetLevel} | {config.academicYear}</p>
-                      </div>
-                      <span className="font-mono font-bold text-[#d2b48c] shrink-0">
-                        ₦{Number(config.amount).toLocaleString()}
-                      </span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </section>
-
-          {/* DYNAMIC METRICS BOARDS */}
-          <section className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4 h-fit">
+        <div className="flex flex-col gap-6">
+          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
             <MetricCard 
               title="Department Net Revenue"
               value={`₦${stats.netRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
@@ -482,6 +302,133 @@ const AdminPaymentLedger = () => {
               icon={FaWallet}
               variant="secondary"
             />
+          </section>
+          <section className="w-full bg-[#0a0a0a] border border-[#3d2b1f] rounded-2xl p-6 shadow-xl">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="lg:col-span-5 space-y-5">
+                <header className="border-b border-[#2a1b12] pb-3">
+                  <h3 className="text-xs font-black uppercase tracking-wider text-[#d2b48c] flex items-center gap-2">
+                    <FaSlidersH className="text-[#8b4513]" size={14} aria-hidden="true" /> 
+                    Payment Register
+                  </h3>
+                </header>
+
+                <form onSubmit={handleUpdateFeeMatrix} className="space-y-4">
+                  <div>
+                    <label htmlFor="narration" className="text-[10px] uppercase tracking-widest font-bold text-gray-400 block mb-1.5">
+                       Narration
+                    </label>
+                    <select 
+                      id="narration"
+                      value={form.narration}
+                      disabled={isUpdatingConfig}
+                      onChange={(e) => setForm(prev => ({ ...prev, narration: e.target.value }))}
+                      className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3.5 py-2.5 text-gray-300 focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/40 disabled:opacity-50 transition-all"
+                    >
+                      {NARRATIONS.map(narr => (
+                        <option key={narr} value={narr}>{narr}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="academicYear" className="text-[10px] uppercase tracking-widest font-bold text-gray-400 block mb-1.5">
+                      Academic Session
+                    </label>
+                    <select 
+                      id="academicYear"
+                      value={form.academicYear}
+                      disabled={isUpdatingConfig}
+                      onChange={(e) => setForm(prev => ({ ...prev, academicYear: e.target.value }))}
+                      className="w-full bg-[#111111] border border-[#2a1b12] text-xs rounded-lg px-3.5 py-2.5 text-gray-300 focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/40 disabled:opacity-50 transition-all"
+                    >
+                      {ACADEMIC_SESSIONS.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="amount" className="text-[10px] uppercase tracking-widest font-bold text-gray-400 block mb-1.5">
+                      Amount (₦)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-mono text-xs text-gray-500" aria-hidden="true">₦</span>
+                      <input 
+                        id="amount"
+                        type="number" 
+                        required
+                        min="1"
+                        value={form.amount}
+                        disabled={isUpdatingConfig}
+                        placeholder=""
+                        onChange={(e) => setForm(prev => ({ ...prev, amount: e.target.value }))}
+                        className="w-full bg-[#111111] border border-[#2a1b12] font-mono text-xs rounded-lg pl-8 pr-3.5 py-2.5 text-white focus:outline-none focus:border-[#8b4513] focus:ring-1 focus:ring-[#8b4513]/40 disabled:opacity-50 transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit" 
+                    disabled={isUpdatingConfig}
+                    className="w-full bg-[#8b4513] hover:bg-[#a0522d] disabled:bg-[#3d2b1f] disabled:cursor-not-allowed text-white py-3 rounded-lg text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md focus:outline-none focus:ring-2 focus:ring-[#8b4513]/50 mt-2"
+                  >
+                    {isUpdatingConfig ? (
+                      <><FaCircleNotch className="animate-spin" size={12} /> Updating Rate Matrix...</>
+                    ) : (
+                      <><FaSave size={12} /> Payment register</>
+                    )}
+                  </button>
+                </form>
+
+                {feedback.message && (
+                  <div role="alert" className={`p-3 rounded-lg text-[10px] tracking-wide border flex items-start gap-2 ${
+                    feedback.type === 'success' 
+                      ? 'bg-emerald-950/20 border-emerald-900/40 text-emerald-400' 
+                      : 'bg-rose-950/20 border-rose-900/40 text-rose-400'
+                  }`}>
+                    {feedback.type === 'success' ? (
+                      <FaCheckCircle size={12} className="shrink-0 mt-0.5" aria-hidden="true" />
+                    ) : (
+                      <FaExclamationTriangle size={12} className="shrink-0 mt-0.5" aria-hidden="true" />
+                    )}
+                    <span>{feedback.message}</span>
+                  </div>
+                )}
+              </div>
+              <div className="lg:col-span-7 bg-[#111111]/60 border border-[#2a1b12] rounded-xl p-5 h-full flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-center mb-3 pb-2 border-b border-[#1a110b]">
+                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                      Active Rates
+                    </h4>
+                    <span className="text-[9px] font-mono text-gray-500">{feeConfigs.length} entries</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
+                    {feeConfigs.length === 0 ? (
+                      <p className="text-gray-600 text-[10px] italic col-span-full py-8 text-center">No active rates configured.</p>
+                    ) : (
+                      feeConfigs.map((config) => (
+                        <div 
+                          key={config._id || `${config.narration}-${config.academicYear}`} 
+                          className="flex justify-between items-center bg-[#0a0a0a] border border-[#1a110b] hover:border-[#3d2b1f] px-3 py-2.5 rounded-lg text-xs transition-colors"
+                        >
+                          <div className="truncate pr-2">
+                            <p className="text-gray-300 font-medium truncate text-[11px]">{config.narration}</p>
+                            <p className="text-[9px] text-gray-500 font-mono mt-0.5">{config.academicYear}</p>
+                          </div>
+                          <span className="font-mono font-bold text-[#d2b48c] shrink-0 text-xs">
+                            ₦{Number(config.amount).toLocaleString()}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </section>
         </div>
 
@@ -553,10 +500,10 @@ const AdminPaymentLedger = () => {
                   <th scope="col" className="p-4 whitespace-nowrap">Reference ID</th>
                   <th scope="col" className="p-4 whitespace-nowrap">Narration Purpose</th>
                   <th scope="col" className="p-4 whitespace-nowrap">Academic Scope</th>
-                  <th scope="col" className="p-4 whitespace-nowrap text-emerald-400">Department Base (₦)</th>
+                  <th scope="col" className="p-4 whitespace-nowrap text-emerald-400">Amount(₦)</th>
                   <th scope="col" className="p-4 whitespace-nowrap text-blue-400">Gateway Fee (₦)</th>
                   <th scope="col" className="p-4 whitespace-nowrap text-amber-400">Total Charged (₦)</th>
-                  <th scope="col" className="p-4 text-center whitespace-nowrap">Gate Status</th>
+                  <th scope="col" className="p-4 text-center whitespace-nowrap"> Status</th>
                 </tr>
               </thead>
               <tbody className="text-xs divide-y divide-[#1a110b]">

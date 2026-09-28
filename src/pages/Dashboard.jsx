@@ -147,8 +147,6 @@ const Dashboard = () => {
 
   return (
     <div className={`flex flex-col h-[100dvh] w-screen max-w-full overflow-hidden font-sans select-none transition-colors duration-300 ${isDarkMode ? 'bg-[#050505] text-white' : 'bg-stone-100 text-stone-900'}`}>
-      
-      {/* 🧭 Top Frame Navigation Bar Component Layout */}
       <nav className={`h-16 flex items-center justify-between px-6 z-50 shrink-0 border-b transition-colors duration-300 ${isDarkMode ? 'bg-[#111111]/95 border-[#2a1b12]' : 'bg-white border-stone-200 shadow-sm'}`}>
         <div className="flex items-center gap-4">
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className={`transition-colors outline-none cursor-pointer ${isDarkMode ? 'text-[#d2b48c] hover:text-white' : 'text-stone-600 hover:text-stone-900'}`}>
@@ -161,11 +159,8 @@ const Dashboard = () => {
 
         <div className="flex items-center gap-4">
           <div className="text-right hidden sm:block">
-            <p className={`text-[10px] font-bold uppercase tracking-widest leading-none transition-colors ${isDarkMode ? 'text-[#d2b48c]' : 'text-stone-500'}`}>Access Level 1</p>
             <p className={`text-xs font-serif mt-1 transition-colors ${isDarkMode ? 'text-white' : 'text-stone-800 font-bold'}`}>{currentUser?.fullName || 'Administrator'}</p>
           </div>
-
-          {/* 🌓 Fluid Dynamic Layout Dark/Light Controller Switch */}
           <button 
             type="button"
             onClick={() => setIsDarkMode(!isDarkMode)}
@@ -176,8 +171,6 @@ const Dashboard = () => {
           >
             {isDarkMode ? <FaSun size={14} /> : <FaMoon size={14} />}
           </button>
-          
-          {/* User Operations Control Dropdown */}
           <div className="relative">
             <button 
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -197,11 +190,7 @@ const Dashboard = () => {
           </div>
         </div>
       </nav>
-
-      {/* Primary Split Viewport Container Panel Frame */}
       <div className="flex flex-1 overflow-hidden relative w-full h-full">
-        
-        {/* 📑 Adjustable Flexible Dimension Navigation Control Sidebar Layer */}
         <aside 
           style={{ width: isSidebarOpen ? `${sidebarWidth}px` : '0px' }}
           className={`${isDragging ? 'transition-none' : 'transition-all duration-300'} absolute md:relative z-40 h-full flex flex-col shrink-0 shadow-2xl overflow-hidden ${isSidebarOpen ? 'border-r' : 'border-r-0'} ${isDarkMode ? 'bg-[#0a0a0a] border-[#2a1b12]' : 'bg-stone-50 border-stone-200'}`}
@@ -258,12 +247,10 @@ const Dashboard = () => {
             
             <div className={`pt-4 border-t ${isDarkMode ? 'border-white/5' : 'border-stone-200'}`}>
               <button type="button" onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-red-900/10 text-red-500 transition-colors text-left group font-bold uppercase tracking-widest text-[11px] outline-none cursor-pointer">
-                <FaSignOutAlt className="group-hover:text-red-400" size={13} /> Sign Out Panel
+                <FaSignOutAlt className="group-hover:text-red-400" size={13} /> Log-out
               </button>
             </div>
           </div>
-
-          {/* User Workspace Width Resizer Drag Handle Splitter */}
           <div 
             onMouseDown={() => setIsDragging(true)}
             className={`hidden md:block absolute top-0 right-0 w-1 h-full cursor-col-resize transition-colors z-50 ${isDarkMode ? 'hover:bg-[#8b4513]' : 'hover:bg-stone-400'}`}
@@ -271,8 +258,6 @@ const Dashboard = () => {
             <div className={`w-full h-full ${isDragging ? (isDarkMode ? 'bg-[#8b4513]' : 'bg-stone-400') : 'bg-transparent'}`}></div>
           </div>
         </aside>
-
-        {/* 💻 Primary Content Canvas Wrapper Workspace Layout */}
         <main className={`flex-1 overflow-y-auto w-full h-full p-6 md:p-12 relative transition-colors duration-300 ${isDarkMode ? 'bg-[#050505]' : 'bg-stone-100'}`}>
           <div className="max-w-6xl mx-auto relative z-10 h-full">
             
@@ -292,8 +277,6 @@ const Dashboard = () => {
               </div>
             ) : (
               <div className="w-full">
-                
-                {/* 📊 Dashboard Core Statistical Analytics Counter Row Block Layout Grid */}
                 {activeView === 'overview' && (
                   <div className="space-y-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -317,8 +300,6 @@ const Dashboard = () => {
                     </div>
                   </div>
                 )}
-                
-                {/* Content Panel Control Routing Configurations Context Injections */}
                 {activeView === 'paymentLedger' && <AdminPaymentLedger />}
                 {activeView === 'massSelection' && <MassSelection />} 
                 {activeView === 'announcements' && <AdminAnnouncements />}
@@ -328,7 +309,7 @@ const Dashboard = () => {
                 {activeView === 'accountManager' && <AccountManager />}
                 {activeView === 'registeredMembers' && <MemberDirectory initialFilter="all" />}
                 {activeView === 'pendingApprovals' && <MemberDirectory initialFilter="pending" />}
-                {activeView === 'levelManager' && <AdminLevelManager />} {/* <-- 3. REGISTERED LEVEL MANAGER COMPONENT VIEW ROUTE */}
+                {activeView === 'levelManager' && <AdminLevelManager />} 
                 
                 {activeView === 'executives' && (
                   <div className="space-y-8">

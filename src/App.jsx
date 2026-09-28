@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import AdminSignup from './pages/AdminSignup';
 import AdminLogin from './pages/AdminLogin';
+import ChangeCredentials from './pages/ChangeCredentials';
 import Dashboard from './pages/Dashboard';
 import axios from 'axios';
 
@@ -9,10 +9,10 @@ import axios from 'axios';
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      if (import.meta.env.DEV) {
-        console.warn("🚨 [ROUTER DIAGNOSTIC]: caught 401 Unauthorized. Purging storage.");
-      }
+    // DO NOT refresh or redirect if the request came from the login endpoint itself
+    const isLoginEndpoint = error.config?.url?.includes('/api/admin/login');
+
+    if (error.response && error.response.status === 401 && !isLoginEndpoint) {
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminUser');
       window.location.href = '/admin/login';
@@ -23,7 +23,6 @@ axios.interceptors.response.use(
 
 /**
  * 🛡️ PROTECTED ROUTE GUARD
- * Intercepts unauthenticated clients and redirects safely to the login portal.
  */
 const ProtectedRoute = ({ children }) => {
   const token = localStorage.getItem('adminToken');
@@ -38,8 +37,6 @@ const ProtectedRoute = ({ children }) => {
 
 /**
  * 📋 ADMINISTRATIVE CORE LAYOUT
- * Clean shell layout container. Padding and margins have been removed so the 
- * internal Dashboard component can control its own edge-to-edge rendering.
  */
 const AdminLayout = ({ children }) => {
   return (
@@ -53,15 +50,19 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* ========================================== */}
-        {/* PUBLIC ACCESSIBLE CHANNELS                 */}
-        {/* ========================================== */}
-        <Route path="/admin/signup" element={<AdminSignup />} />
+        {/* PUBLIC ROUTE */}
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* ========================================== */}
-        {/* PROTECTED WORKSPACE ENTRIES                */}
-        {/* ========================================== */}
+        {/* PROTECTED ROUTES */}
+        <Route 
+          path="/admin/change-credentials" 
+          element={
+            <ProtectedRoute>
+              <ChangeCredentials />
+            </ProtectedRoute>
+          } 
+        />
+
         <Route 
           path="/admin/dashboard" 
           element={
@@ -73,9 +74,7 @@ function App() {
           } 
         />
 
-        {/* ========================================== */}
-        {/* CORE FALLBACK INTERCEPT ROUTING CONTROLS   */}
-        {/* ========================================== */}
+        {/* FALLBACK ROUTING */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
