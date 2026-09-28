@@ -3,30 +3,29 @@ import axios from 'axios';
 import { FaCalendarAlt, FaUpload, FaHeading, FaList, FaMapMarkerAlt, FaClock, FaTrash, FaEdit, FaTimes, FaSync } from 'react-icons/fa';
 import { PulseLoader } from 'react-spinners';
 
-// Grab the environment variable and strip any accidental trailing slashes
 const API_BASE_URL = (import.meta.env.VITE_API_URL || 'http://localhost:5001').replace(/\/$/, '');
 
 const AdminEvents = () => {
-  const [formData, setFormData] = useState({
+  const categories = ["General", "General Meetings", "General Practice", "ASA Novena", "ASA Chaplaincy Cup", "Sendforth Events"];
+
+  const initialFormState = {
     title: '',
-    category: '',
+    category: categories[0], // Set default to first valid category
     description: '',
     narration: '',
     eventDate: '',
     time: '',
     location: '',
     image: null
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
   const [events, setEvents] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [status, setStatus] = useState({ type: '', message: '' });
-  
-  // 🎯 Key helper state used to force clear HTML5 file field cache streams on submission
   const [fileInputKey, setFileInputKey] = useState(Date.now());
-
-  const categories = ["All Events", "General", "General Meetings", "General Practice", "ASA Novena", "ASA Chaplaincy Cup", "Sendforth Events"];
 
   useEffect(() => {
     fetchEvents();
@@ -63,7 +62,9 @@ const AdminEvents = () => {
     const data = new FormData();
     Object.keys(formData).forEach(key => {
       if (key === 'image') {
-        if (formData[key] instanceof File) data.append(key, formData[key]);
+        if (formData[key] instanceof File) {
+          data.append(key, formData[key]);
+        }
       } else if (formData[key] !== undefined && formData[key] !== null) {
         data.append(key, formData[key]);
       }
@@ -71,10 +72,10 @@ const AdminEvents = () => {
 
     try {
       const token = localStorage.getItem('adminToken');
+      // REMOVED explicit 'Content-Type': 'multipart/form-data' so Axios can add the boundary automatically
       const config = {
         headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data' // Ensuring seamless binary streaming boundary mappings
+          'Authorization': `Bearer ${token}` 
         }
       };
 
@@ -86,10 +87,7 @@ const AdminEvents = () => {
         setStatus({ type: 'success', message: 'New event flyer and narration published to live archives!' });
       }
       
-      // Reset form controls completely
-      setFormData({ title: '', category: 'Workshops', description: '', narration: '', eventDate: '', time: '', location: '', image: null });
-      setEditingId(null);
-      setFileInputKey(Date.now()); // ✨ Instantly resets the file selector layout text cleanly!
+      cancelEdit();
       fetchEvents();
     } catch (error) {
       setStatus({ type: 'error', message: error.response?.data?.message || 'Transaction matrix failed to execute.' });
@@ -103,7 +101,7 @@ const AdminEvents = () => {
     setEditingId(event._id);
     setFormData({
       title: event.title || '',
-      category: event.category || 'Workshops',
+      category: event.category || categories[0],
       description: event.description || '',
       narration: event.narration || '',
       eventDate: event.eventDate ? new Date(event.eventDate).toISOString().split('T')[0] : '',
@@ -129,7 +127,7 @@ const AdminEvents = () => {
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ title: '', category: 'Workshops', description: '', narration: '', eventDate: '', time: '', location: '', image: null });
+    setFormData(initialFormState);
     setFileInputKey(Date.now());
   };
 
@@ -203,7 +201,6 @@ const AdminEvents = () => {
             <textarea required name="narration" value={formData.narration} onChange={handleChange} rows="4" placeholder="Enter agendas" className="w-full bg-[#161616] border border-[#2a1b12] rounded-xl p-4 text-sm text-[#d2b48c] focus:border-[#8b4513] outline-none resize-none" />
           </div>
 
-          {/* Flyer Asset Element Frame Wrapper */}
           <div className="space-y-2">
             <label className="text-[10px] uppercase text-[#8b4513] font-bold ml-1">Upload Event Flyer</label>
             <div key={fileInputKey} className="relative group border-2 border-dashed border-[#2a1b12] hover:border-[#8b4513]/60 rounded-2xl p-8 text-center transition-all bg-[#0d0d0d] shadow-inner">
@@ -235,7 +232,7 @@ const AdminEvents = () => {
         </form>
       </div>
 
-      {/* Grid Table Ledger List Section */}
+      {/* History Ledger */}
       <div className="max-w-4xl mx-auto">
         <h3 className="text-lg font-serif text-[#d2b48c] mb-6 border-b border-[#2a1b12] pb-4 flex items-center gap-3">
           <FaSync className={fetchLoading ? "animate-spin text-[#8b4513]" : "text-[#8b4513]"} /> History
