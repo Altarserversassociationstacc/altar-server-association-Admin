@@ -57,12 +57,11 @@ const ChangeCredentials = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center p-6 font-sans">
-      <div className="max-w-md w-full bg-gray-800 rounded-xl shadow-2xl overflow-hidden border border-white/5">
+    <div className="min-h-screen text-[#8b4513] dark:text-[#d2b48c] flex items-center justify-center p-6 font-sans">
+      <div className="max-w-md w-full text-[#8b4513] dark:text-[#d2b48c]rounded-xl shadow-2xl overflow-hidden border border-white/5">
         
-        <div className="p-8 text-center border-b border-gray-700 bg-gray-700/30">
-          <h2 className="text-xl font-bold tracking-tight text-amber-400 uppercase">First-Time Setup</h2>
-          <p className="text-gray-400 text-xs mt-2 font-medium">Replace default credentials to complete activation</p>
+        <div className="p-8 text-center border-b border-gray-700 text-[#8b4513] dark:text-[#d2b48c]">
+          <h2 className="text-xl font-bold tracking-tight text-amber-400 uppercase">Change Credentials</h2>
         </div>
 
         <div className="p-8">
@@ -121,7 +120,7 @@ const ChangeCredentials = () => {
                 onChange={handleChange}
                 required
                 placeholder="Confirm New Password"
-                className="w-full bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-2 focus:ring-amber-500 block pl-10 pr-10 p-3.5 outline-none"
+                className="w-full  text-[#8b4513] dark:text-[#d2b48c] text-white text-sm rounded-lg focus:ring-2 focus:ring-amber-500 block pl-10 pr-10 p-3.5 outline-none"
               />
               <button
                 type="button"
@@ -135,9 +134,9 @@ const ChangeCredentials = () => {
             <button 
               type="submit" 
               disabled={loading} 
-              className="w-full mt-6 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black uppercase tracking-wider py-3.5 px-4 rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg shadow-amber-600/20 cursor-pointer"
+              className="w-full mt-6 bg-gradient-to-r from-[#8b4513] to-[#5c4033] hover:from-[#a0522d] hover:to-[#8b4513] text-white font-bold py-4 px-4 rounded-xl tracking-[0.2em] transition-all duration-300 uppercase text-xs shadow-lg hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0 flex items-center justify-center gap-2"
             >
-              {loading ? <PulseLoader color="#ffffff" size={6} margin={2} /> : 'Save Credentials & Proceed'}
+              {loading ? <PulseLoader color="#ffffff" size={6} margin={2} /> : 'Save credentials'}
             </button>
           </form>
         </div>
